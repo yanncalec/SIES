@@ -75,7 +75,7 @@ for s=1:obj.cfg.Ns_total
         % Generate the system matrix and resolution of system A.5      
         matrix_BEM = [[matrix_A matrix_B] ; [matrix_C matrix_D]; [reshape(Psi_int, 1, []) ...
                             zeros(1,obj.nbBEM2*obj.nbIncls)]; [zeros(1,obj.nbBEM1) reshape(Phi_int,1,[])]];        
-        SF(:,n,s) = matrix_BEM\[obj.dHdn(:,s); 0; 0];; % function (psi,phi) of the source s and all inclusions        
+        SF(:,n,s) = matrix_BEM\[obj.dHdn(:,s); 0; 0]; % function (psi,phi) of the source s and all inclusions        
 
         % Post-processing (1/2-K^*+xi dDdn)[dudn - dUdn]
         %
@@ -88,9 +88,13 @@ for s=1:obj.cfg.Ns_total
         %
         % f = \sum_n s_n h_n, and a_n = <f,h_n>, with h_n a basis, then s = G^-1 a
 
-        % use the fact that dudn|+=psi_u (psi_u is the function psi of A.5), 
-        % and dUdn|+=psi_U (psi_U is the function psi of A.2).  
-        PP(:,n,s) = -obj.Grammatrix\(matrix_B * SF(obj.nbBEM1+1:end, n, s));
+        % Using the fact that dudn|+=psi_u (psi_u is the function psi of A.5), 
+        % and dUdn|+=psi_U (psi_U is the function psi of A.2), we see that
+        % Postprocessing(du|+ - dU|+) = Postprocessing(psi - psiU) = S_D[phi]
+        %
+        % The Gram matrix can not be removed otherwise the dipolar
+        % expansion will not match the data
+        PP(:,n,s) = -obj.Grammatrix\(matrix_B * SF(obj.nbBEM1+1:end, n, s)); % minus sign because matrix_B = -S_D
     end
 end
 
@@ -127,8 +131,7 @@ for n = 1:length(freq)
     for i=1:obj.nbIncls
         toto = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
         for s=1:obj.cfg.Ns_total
-            % Evaluate the single layer potential S_D[phi] on fish's body, recall that phi =
-            % (lambda I - K_D^*)^-1 [dH/dn]
+            % Evaluate the single layer potential S_D[phi] on fish's body
             rcv = obj.cfg.rcv(s); % receivers corresponding to the s-th source
             toto(s,:) = ops.SingleLayer.eval(obj.D{i}, out.vphi{n,i}(:,s), rcv);
         end

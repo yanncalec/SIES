@@ -15,7 +15,7 @@ end
 Amat = KsdS;
 
 for n = 1:nbIncls
-    Amat{n,n} = lambda(n)*eye(size(KsdS{n,n})) - KsdS{n,n};
+    Amat{n,n} = lambda(n)*eye(size(KsdS{n,n})) + KsdS{n,n}; % It is a plus here by construction of KsdS (see make_block_matrix function)
 end
 
 Amat = cell2mat(Amat);

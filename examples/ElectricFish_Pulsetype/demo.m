@@ -18,19 +18,17 @@ nbPoints = 2^10; % number of discritization points on the boundary
 
 % Initialize an object of |shape.C2boundary|
 B = shape.Flower(delta/2, delta/2, nbPoints, 5, 0.4, 0);
-D{1}=(B<(0.3*pi))*0.2+0.02*[1,1]'; % rotation, scaling and translation to get the first inclusion
+D{1}=(B<(0.3*pi))*0.2+0.2*[1,1]'; % rotation, scaling and translation to get the first inclusion
 
-cnd = [10]; % conductivity values of two inclusions
-pmtt = [0.1]; % permittivity values
+% cnd = [10]; % conductivity values of two inclusions
+% pmtt = [0.1]; % permittivity values
 
 % One can also add multiple inclusions
-% B = shape.Flower(delta/2, delta/2, nbPoints, 5, 0.4, 0);
-% D{1}=(B<(0.3*pi))*0.2+0.2*[1,1]'; % rotation, scaling and translation to get the first inclusion
-% B = shape.Ellipse(delta,delta/2,nbPoints);
-% D{2}=B*0.2+0.2*[-1,-1]'; % second inclusion
-% 
-% cnd = [10, 0.1]; % conductivity values of two inclusions
-% pmtt = [0.1, 0.2]; % permittivity values
+B = shape.Ellipse(delta,delta/2,nbPoints);
+D{2}=B*0.2+0.2*[-1,-1]'; % second inclusion
+
+cnd = [10, 0.1]; % conductivity values of two inclusions
+pmtt = [0.1, 0.2]; % permittivity values
 
 %% Set up an environment for experience
 % The sources/receptors are distributed on a circle whose center is closed
@@ -63,7 +61,7 @@ impd = 0.001;
 % The fish's receptors are distributed on the skin, and one can choose 
 % activate receivers by giving their indexes.
 
-idxRcv = 1:2:Omega.nbPoints; % This generates a equally distributed receptors
+idxRcv = 1:1:Omega.nbPoints; % This generates a equally distributed receptors
 % idxRcv = (Omega.nbPoints/4):4:(3*Omega.nbPoints/4); 
 
 %% Configuration of the acquisition and setting up an environment for experience
@@ -84,19 +82,23 @@ stepBEM = 4; % down-sampling factor for the P1 basis
 %%
 % Initialize an environment by passing the fish, the inclusions, the
 % configuration, and the physical constants etc.
-P = PDE.ElectricFish(D, cnd, pmtt, cfg, stepBEM);
+
+Tmax = 0.1; %[0, Tmax]
+hfunc_inline = inline('exp(-(x-m1).^2/2/s1^2)-exp(-(x-m2).^2/2/s2^2)');
+hfunc = @(Tmax,x)hfunc_inline(Tmax/2-Tmax*0.01,Tmax/2+Tmax*0.01,Tmax*0.1,Tmax*0.1, x);
+waveform = hfunc(Tmax, linspace(0,Tmax,99)); waveform = [0, waveform]*10;
+
+figure; plot(waveform);
+
+P = PDE.ElectricFish_Pulsetype(D, cnd, pmtt, cfg, stepBEM, waveform, Tmax);
 figure; plot(P, [], 'LineWidth', 1); axis image;
 
 %% Simulation of data
 % The output is a structure containing many fields, see the function
 % data_simulation().
 
-%%
-% The fish uses a list of working frequencies to acquire data.
-freqlist = linspace(100,200,1); % frequency values
-
 tic
-data = P.data_simulation(freqlist);
+data = P.data_simulation(2);
 toc
 
 %% 
@@ -105,8 +107,9 @@ toc
 %% 
 % Boundaray integral of P1 elements $\int_{\partial\Omega} \psi(x)ds(x)$
 % and P0 elements $\int_{\partial\Omega} \phi(x)ds(x)$
-norm(Omega.sigma * data.fpsi{1}(:,1)) % fpsi is the value of the function $\psi(x)$
-norm(D{1}.sigma * data.fphi{1}(:,1, 1)) % fphi is the value of the function $\phi(x)$
+t = 4;
+norm(Omega.sigma * data.fpsi{t}(:,1)) % fpsi is the value of the function $\psi(x)$
+norm(D{1}.sigma * data.fphi{t}(:,1, 1)) % fphi is the value of the function $\phi(x)$
 
 %% Plot the potential fields
 % *Bugs*: some grid points are on the fish's skin which may cause numerical
@@ -114,10 +117,10 @@ norm(D{1}.sigma * data.fphi{1}(:,1, 1)) % fphi is the value of the function $\ph
 %%
 % Calculate the field and plot it. 
 sidx = 1; % source index to be calculated
-fidx = 1; % frequency index to be calculated
-[F, F_bg, SX, SY] = P.calculate_field(fidx, sidx, [0,0]', 3, 100, data.fpsi_bg, data.fpsi, data.fphi);
+tidx = 1; % frequency index to be calculated
+[F, F_bg, SX, SY] = P.calculate_field(tidx, sidx, [0,0]', 3, 100, data.fpsi_bg, data.fpsi, data.fphi);
 P.plot_field(sidx, F, F_bg, SX, SY, 100, 0, '-g','LineWidth', 1.1);
-
+cc
 %% Reconstruction of CGPT
 % Finally from data acquired by fish, we reconstruct the CGPTs and compare
 % them with the theoretical values. Since data are of multi-frequency, and
@@ -130,7 +133,7 @@ ord = 2; % maximum order of the reconstruction
 
 %%
 % Compute first the theoretical value of CGPT
-for f=1:length(freqlist)
+for f=1:Nt
     lambda = asymp.CGPT.lambda(cnd, pmtt, freqlist(f));
     CGPTD{f} = asymp.CGPT.theoretical_CGPT(D, lambda, ord);
 end

@@ -1,16 +1,18 @@
-classdef ElectricFish < PDE.Small_Inclusions
-% Class for modeling the weakly electric fish
+classdef ElectricFish_Pulsetype < PDE.Small_Inclusions
+% Class for modeling the weakly electric fish with time varying source
 % Reference: 
 % [1] Modeling active electrolocation in weakly electric fish. Ammari, Boulier, Garnier, version 28, June, 2012
 % [2] Shape identification in electrolocation, Ammari, Boulier, Garnier, Wang, submitted to PNAS
-    
+% [3] Pulse imaging
+
     properties(Access=protected)
         % Similar to Conductivity_R2 class, the system matrix is build by blocks as
         % [A         B        ]
         % [C   lambda I - KsdS]
         
-        KsdS=[] % same as KsdS of Conductivity_R2        
-        dHdn=[] % the normal derivative of H, or the right hand vector in A[phi]=b
+%         KsdS=[] % same as KsdS of Conductivity_R2        
+        dHdn=[] % the normal derivative of H_Omega (not yet the right had vector in the linear system)
+%         dHdn_time=[]
     end
 
     properties(SetAccess = protected)
@@ -30,17 +32,22 @@ classdef ElectricFish < PDE.Small_Inclusions
         
         Psi % P1 basis for fish's body
         Grammatrix % Gram matrix of Psi: Psi' * Psi        
+        
+        waveform % time profile h(t)
+        Tmax % time duration of the waveform
+        time_step % dt
     end
     
     methods(Access=protected)
         % Compute the normal derivative of the function H in eq A.5, the right hand vector 
-        val  = compute_dHdn(obj, sidx)
+        val = compute_dHdn(obj, sidx)
+        % Compute the right hand side vector b (from dHdn) which is of time dependant
+        val = compute_rhs_bvec(obj)
     end
     
     methods
-        function obj = ElectricFish(D, cnd, pmtt, cfg, stepBEM)
-        % obj = ElectricFish(Omega, D, cfg, stepBEM)
-        % Constructor of ElectriFish class
+        function obj = ElectricFish_Pulsetype(D, cnd, pmtt, cfg, stepBEM, waveform, Tmax)
+        % Constructor of ElectriFish_Time class
         % Inputs:
         % D: exterior small inclusions
         % cnd, pmtt: conductivity and permittivity constants of D
@@ -58,7 +65,15 @@ classdef ElectricFish < PDE.Small_Inclusions
             obj.impd = cfg.impd;
 
             obj.cnd = cnd; obj.pmtt = pmtt;
-
+            
+            % Check the validity of the waveform
+            if waveform(1)~=0
+                error('Value of the waveform must start by 0.');
+            end
+            
+            obj.waveform = waveform; 
+            obj.Tmax = Tmax;
+            
             obj.typeBEM1 = 'P1'; obj.typeBEM2 = 'P0';
             
             if mod(obj.Omega.nbPoints, stepBEM)
@@ -70,8 +85,9 @@ classdef ElectricFish < PDE.Small_Inclusions
             % P1 elements for fish body;
             obj.Psi = tools.BEM.P1_basis(obj.Omega.nbPoints, obj.stepBEM1);            
             
-            obj.KsdS = asymp.CGPT.make_block_matrix(obj.D); 
+            %             obj.KsdS = asymp.CGPT.make_block_matrix(obj.D);
             obj.dHdn = obj.compute_dHdn();
+%             obj.dHdn_time = obj.dHdn(:) * reshape(obj.waveform, 1, []);
         end
                 
         function val = get.Grammatrix(obj)
@@ -85,7 +101,11 @@ classdef ElectricFish < PDE.Small_Inclusions
         function val = get.nbBEM2(obj)
             val = floor(obj.D{1}.nbPoints / obj.stepBEM2);
         end
-        
+
+        function val = get.time_step(obj)
+            val = obj.Tmax / (length(obj.waveform)-1);
+        end
+
         function plot(obj, idx, varargin)
             for n=1:obj.nbIncls
                 plot(obj.D{n}, varargin{:}); hold on;
@@ -96,11 +116,11 @@ classdef ElectricFish < PDE.Small_Inclusions
             end
             obj.cfg.plot(idx, varargin{:});
         end                   
-
+        
         [F, F_bg, SX, SY, mask] = calculate_field(obj, f, s, z0, width, N, fpsi_bg, fpsi, fphi)        
         plot_field(obj, s, F, F_bg, SX, SY, subfig, varargin)
 
-        out = data_simulation(obj, freq)
+        out = data_simulation(obj, Nt)
                         
         out = reconstruct_CGPT(obj, MSR, Current, ord, maxiter, tol, symmode)
         out = reconstruct_PT(obj, SFR, Current_bg, maxiter, tol, symmode)
@@ -139,6 +159,12 @@ classdef ElectricFish < PDE.Small_Inclusions
                 toto{n} = -1*dSLdn.stiffmat + impd*dDLdn.stiffmat;
             end
             matrix_C = cell2mat(toto);
+        end
+
+        function matrix_D = system_matrix_block_D(D, lambda)
+        % Operator (lambda*I - K_D^*)
+            KsdS = asymp.CGPT.make_block_matrix(D); 
+            matrix_D = asymp.CGPT.make_system_matrix_fast(KsdS, lambda);
         end
 
         function out = add_white_noise(data, nlvl)

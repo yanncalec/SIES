@@ -9,13 +9,13 @@ function [ D ] = bdiag(A, idx)
 if idx==1
     D = zeros(M*N, N);
     for n = 1:N
-        D(((n-1)*M+1):(n*M), n) = A(:,n);        
+        D(((n-1)*M+1):(n*M), n) = A(:,n);
     end
 else
     D = zeros(M, M*N);
     for m = 1:M
-        D(m, ((m-1)*N+1):(m*N)) = A(m,:);        
-    end    
+        D(m, ((m-1)*N+1):(m*N)) = A(m,:);
+    end
 end
 
 end
