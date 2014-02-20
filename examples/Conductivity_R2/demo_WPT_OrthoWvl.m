@@ -15,12 +15,12 @@ delta = 1 ; % diameter of the standard shape
 %%
 % Initialize an object of |C2boundary|
 
-B = shape.Flower(delta/2,delta/2,[0,0]',0,2^12,5,0.4,0); 
+B = shape.Flower(delta/2,delta/2,2^12,5,0.4,0); 
 % figure; plot(B); axis image;
-cc
+
 %%
 % Set the conductivity and the permittivity of the inclusion
-B.cnd = 4/3; B.pmtt = 1;
+cnd = 4/3; pmtt = 1;
 
 %%
 % Scaling, translation and rotation parameters:
@@ -41,7 +41,7 @@ disp('Constructing the wavelet object...');
 tic
 WF=wavelet.OrthoWvl('Daubechies', 6, D.center_of_mass, ROI_width, Rsl);
 toc
-
+cc
 %%
 % Theoretical values of WPT
 nbScl = 0;

@@ -1,4 +1,4 @@
-function Y = func_dh(X, Sm, Rm, M0, nrmlcst)
+function Y = func_dh(X, Sm, Rm, M0)
 % Y = func_dh(X, Sm, Rm, M0)
 % Evaluate the partial derivative of h function of the observation equation in KF
 % Inputs:
@@ -78,7 +78,3 @@ Y=zeros(Ns*Nr, 5);
 Y(:, 3) = reshape(Sm * dt1h * Rm', [], 1);
 Y(:, 4) = reshape(Sm * dt2h * Rm', [], 1);
 Y(:, 5) = reshape(Sm * dph * Rm', [], 1);
-
-if nargin > 4
-    Y = Y*nrmlcst;
-end

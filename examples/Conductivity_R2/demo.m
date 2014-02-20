@@ -7,27 +7,23 @@ clear all;
 close all;
 clc;
 addpath('../../');
+%% Definition of small inclusions
 
-%% Definition of the small inclusion
-
-delta = 1 ; % diameter of the standard shape
 %%
 % Initialize an object of |C2boundary|
 
-B = shape.Ellipse(delta,delta/2,2^9);
-% B = shape.Flower(delta/2, delta/2, 2^10, 5, 0.4, 0);
-% B = shape.Triangle(delta/2, pi*0.8, 2^10);
-% B = shape.Rectangle(delta,0.5*delta,2^10);
-% Omega = shape.Banana(5*delta,delta,[0,10]',0,0,1024);
-
-% % or load image from file
-% B = shape.Imgshape('../images/Letters/R.png', delta, delta, 2^10);
+B = shape.Ellipse(1,1/2,2^9);
+% B = shape.Flower(1/2, 1/2, 2^10);
+% B = shape.Triangle(1/2, pi*0.8, 2^10);
+% B = shape.Rectangle(1, 1/2, 2^10);
+% B = shape.Banana(5/2, 1, [0,10]', 0, 0, 2^10);
+% B = shape.Imgshape('../images/Letters/R.png', 2^10);
 
 %%
-% Make multiple inclusions
-D{1}=(B<(0.2*pi))*0.5+[1,1]';
-D{2}=B*0.5+[-1,-1]';
-cnd = [10, 0.1]; 
+% Make (multiple) inclusion(s)
+D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
+% D{2}=B*0.2 + 0.3*[-1,-1]';
+cnd = [10, 10]; 
 pmtt = [5, 5];
 
 % D{1}=B;

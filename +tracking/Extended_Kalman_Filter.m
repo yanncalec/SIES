@@ -1,8 +1,9 @@
-function  X_tt = Extended_Kalman_Filter(Y, Ntime, F, Q, h, dh, R, X0, P0, verbose)
+function  X_tt = Extended_Kalman_Filter(Y, Ntime, F, Q, h, dh, R, X0, P0)
 % X_tt = Extended_Kalman_Filter(Y, Ntime, F, Q, h, dh, R, X0, P0)
 % Extended Kalman Filter
 % Inputs:
-% Y: data stream of dimension ? X Nt, with Nt >= Ntime
+% Y: data stream of dimension ? X Nt, with Nt >= Ntime. If a cell of
+% matrices is given, it will be converted to a data stream matrix.
 % Ntime: processing time
 % F: system state matrix 
 % Q: system noise covariance matix
@@ -14,23 +15,23 @@ function  X_tt = Extended_Kalman_Filter(Y, Ntime, F, Q, h, dh, R, X0, P0, verbos
 X_tt = zeros(length(X0), Ntime);
 %X_tt(:, 1) = X0;
 
-Q0 = zeros(size(Q,1), 1);
-R0 = zeros(size(R,1), 1);
+% Q0 = zeros(size(Q,1), 1);
+% R0 = zeros(size(R,1), 1);
 
 if nargin <= 8 
     P0 = zeros(size(Q));
 end
 
-if nargin <= 9
-    verbose = 0;
-end
-
+% if nargin <= 9
+%     verbose = 0;
+% end
+% 
 P_tt = P0;
 
 for n=1:Ntime
-    if verbose
-        disp(['Tracking time ', num2str(n), ' of ',num2str(Ntime)]);
-    end
+    %     if verbose
+    %         disp(['Tracking time ', num2str(n), ' of ',num2str(Ntime)]);
+    %     end
     
     % Prediction
     if n==1

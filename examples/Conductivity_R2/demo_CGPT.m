@@ -7,19 +7,17 @@ close all;
 clc;
 addpath('../../');
 
-%% Definition of the small inclusion
+%% Definition of small inclusions
 
-delta = 1 ; % diameter of the standard shape
 %%
 % Initialize an object of |C2boundary|
 
-B = shape.Ellipse(delta,delta/2,2^10);
-% B = shape.Flower(delta/2, delta/2, 2^10, 5, 0.4, 0);
-% B = shape.Triangle(delta/2, pi*0.8, 2^10);
-% B = shape.Rectangle(delta,0.5*delta,2^10);
-
-% % or load image from file
-% B = shape.Imgshape('../images/Letters/R.png', delta, delta, 2^10);
+B = shape.Ellipse(1,1/2,2^9);
+% B = shape.Flower(1/2, 1/2, 2^10, 5, 0.4, 0);
+% B = shape.Triangle(1/2, pi*0.8, 2^10);
+% B = shape.Rectangle(1,1/2,2^10);
+% Omega = shape.Banana(5/2,1,[0,10]',0,0,1024);
+% B = shape.Imgshape('../images/Letters/R.png', 1, 1, 2^10);
 
 %%
 % Make multiple inclusions
@@ -34,13 +32,22 @@ figure; plot(D{1}); hold on; plot(D{2}); axis image;
 cnd = [0.5, 5]; 
 pmtt = [1, 1];
 lambda = asymp.CGPT.lambda(cnd, pmtt, 0);
-ord = 5; % maximum order
+ord = 3; % maximum order
 
 %%
-% Numerical evaluation of CGPT matrix
-M = asymp.CGPT.theoretical_CGPT(D, lambda, ord); % multiple inclusions
-M1 = asymp.CGPT.theoretical_CGPT(B, lambda(1), ord); % single inclusion
-M2 = asymp.CGPT.ellipsetensor(ord, delta, delta/2, cnd(1)); % single inclusion by formula
+% Numerical evaluation of CGPT matrix. There is no linear relationships
+% between the GPTs of multiple objects and those of each single object
+
+M = asymp.CGPT.theoretical_CGPT(D, lambda, ord) % multiple inclusions
+M1 = asymp.CGPT.theoretical_CGPT(D{1}, lambda(1), ord) % single inclusion D1
+M2 = asymp.CGPT.theoretical_CGPT(D{2}, lambda(2), ord) % single inclusion D2
+
+%%
+% Compare the numerical evaluation and the theoretical formula on an
+% ellipse
+
+M1 = asymp.CGPT.theoretical_CGPT(B, lambda(1), ord) % single inclusion by numerical evaluation
+M2 = asymp.CGPT.ellipsetensor(ord, 1, 1/2, cnd(1)) % single inclusion by formula
 % M2 = asymp.CGPT.disktensor(ord, delta, cnd(1))
 
 norm(M1-M2,'fro')/norm(M2,'fro') % numerical error error

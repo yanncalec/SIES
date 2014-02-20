@@ -254,11 +254,11 @@ classdef C2boundary
         [tvec,avec,normal] = boundary_vec(D, t)
         
         function [D, tvec, avec, normal] = rescale(D0, theta0, nbPoints, nsize)
-        % Compute all variables related to the boundary from the the boundary points D0 and the
+        % Compute all variables related to the boundary from the boundary points D0 and the
         % parameterization theta0. The new boundary will be reinterpolated with nbPoints, and
         % optionally rescaled to fit the rectangle of size nsize=[width, height].
             
-            if nargin > 4 && ~isempty(nsize)               
+            if ~isempty(nsize)
                 minx = min(D0(1,:)) ;
                 maxx = max(D0(1,:)) ;
                 miny = min(D0(2,:)) ;

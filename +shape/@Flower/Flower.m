@@ -16,8 +16,14 @@ classdef Flower < shape.C2boundary
     methods
         function obj = Flower(a, b, nbPoints, nbPetals, epsilon, tau)
             if nargin<6
-                epsilon = 0.3; tau = 0;
+                tau = 0;
             end
+            if nargin < 5
+                epsilon = 0.3;
+            end
+            if nargin<4
+                nbPetals = 5;
+            end            
             
             x0 = 0; y0 = 0; phi = 0;
             

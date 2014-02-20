@@ -107,13 +107,12 @@ classdef mconfig
             end
         end
         
-        function plot(obj, varargin)                    
+        function plot(obj, varargin)
             for g=1:obj.Ng
                 [src, rcv] = obj.group(g);
-                plot(src(1,:), src(2,:), 'x', varargin{:}); hold on;
-                plot(rcv(1,:), rcv(2,:), '.', varargin{:}); 
+                plot(src(1,:), src(2,:), 'x'); hold on;
+                plot(rcv(1,:), rcv(2,:), '.');
             end
-            % plot(obj.center(1), obj.center(2), 'r*');
         end        
 
     end

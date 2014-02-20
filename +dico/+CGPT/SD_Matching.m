@@ -1,7 +1,7 @@
 function [err, idx] = SD_Matching(I1, I2, D1, D2, cord, method) 
 % Dictionary matching algorithm by shape descriptor
 % Inputs:
-% I1, I2: shape descriptor of data
+% I1, I2: shape descriptor to be identified
 % D1, D2: shape descriptors of dictionary in cell format
 % cord: maximum order for comparison
 % method: method for measuring the similarity (see the code)
@@ -13,6 +13,8 @@ function [err, idx] = SD_Matching(I1, I2, D1, D2, cord, method)
 if nargin<6
     method=0;
 end
+
+err={};
 
 for ord=1:cord
     err{ord}=zeros(length(D1),1);

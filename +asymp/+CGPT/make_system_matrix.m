@@ -6,7 +6,7 @@ if ~iscell(D)
 end
 nbIncls = length(D);
 
-if nbIncls ~= length(lambda)
+if length(lambda) < nbIncls
     error('Value of lambda must be specified for each inclusion.');
 end
 

@@ -80,7 +80,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
     methods
         function obj = Conductivity_R2(D, cnd, pmtt, cfg)
             obj = obj@PDE.Small_Inclusions(D, cfg);
-            if length(cnd)~=obj.nbIncls || length(pmtt)~=obj.nbIncls
+            if length(cnd)<obj.nbIncls || length(pmtt)<obj.nbIncls
                 error('The value of conductivity and permittivity must be specified for each inclusion');
             end
             
@@ -96,6 +96,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
         end
         
         out = data_simulation(obj, freq)
+        out = data_simulation_stream(obj, Z, A, freq)
 
         % Calculate and plot the potential fields 
         [F, F_bg, Sx, Sy, mask] = calculate_field(obj, freq, s, z0, width, N)        
@@ -126,12 +127,17 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
             mode = 1; % treat each source independently
             rowmajor = 1; % procede row-by-row
             
-            for f=1:length(data)
+            out.sigma = zeros(1, length(data.MSR));
+            
+            for f=1:length(data.MSR) % f can be the index of frequency or time                
                 % add real white noise
-                toto = tools.add_white_noise(real(out.MSR{f}), nlvl, mode, rowmajor); 
-                % add imaginary white noise
-                toto = toto + 1i * tools.add_white_noise(imag(out.MSR{f}), nlvl, mode, rowmajor);
+                [totor, sigmar] = tools.add_white_noise(real(out.MSR{f}), nlvl, mode, rowmajor); 
                 
+                % add imaginary white noise
+                [totoi, sigmai] = tools.add_white_noise(imag(out.MSR{f}), nlvl, mode, rowmajor);
+                toto = totor + 1i * totoi; 
+
+                out.sigma(f) = abs(sigmar + 1i * sigmai);
                 out.MSR_noisy{f} = toto;
             end
         end

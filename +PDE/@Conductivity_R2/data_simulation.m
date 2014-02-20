@@ -12,9 +12,6 @@ function out = data_simulation(obj, freq)
         freq = 0;
     end
 
-    nbPoints = obj.D{1}.nbPoints;
-    src = obj.cfg.all_src();
-
     for f=1:length(freq)
         Phi = obj.compute_phi(freq(f));
 

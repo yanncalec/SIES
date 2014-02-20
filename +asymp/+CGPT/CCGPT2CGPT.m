@@ -8,6 +8,7 @@ function CGPT = CCGPT2CGPT(N1,N2)
 % WARNING: 
 % the conversion to CGPT is valide only for real conductivity case, ie, lambda is a real number. 
 
+
 CGPT={};
 
 CGPT{1}=real(N1+N2)/2; %CC
@@ -15,5 +16,5 @@ CGPT{2}=imag(N1+N2)/2; %CS
 CGPT{3}=imag(N1-N2)/2; %SC
 CGPT{4}=real(N2-N1)/2; %SS
 
-CGPT=GPT.CGPT.cell2mat(CGPT);
+CGPT=asymp.CGPT.cell2mat(CGPT);
 

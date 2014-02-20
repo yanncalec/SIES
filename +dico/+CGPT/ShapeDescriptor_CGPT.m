@@ -1,7 +1,7 @@
 function [I1, I2, S1, S2, T1, T2] = ShapeDescriptor_CGPT(CGPT)
 % Make invariant shape descriptor from CGPT
 % Inputs:
-% N1, N2: the complex CGPT of shape
+% CGPT: the CGPT matrix
 % Outputs:
 % I1, I2: the invariant shape descriptor based on CGPT
 % S1, S2: scaling and translation invariant descriptor

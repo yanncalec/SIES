@@ -8,7 +8,7 @@ if iscell(lambda)
     lambda = cell2mat(lambda);
 end
 
-if nbIncls ~= length(lambda)
+if length(lambda) < nbIncls
     error('Value of lambda must be specified for each inclusion.');
 end
 
