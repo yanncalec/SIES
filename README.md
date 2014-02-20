@@ -26,6 +26,6 @@ The library is written in Matlab object-oriented programming language and is org
 * +wavelet: classes of wavelet representation for shape perception
 * examples: demos scripts
 
-For usage of the package, go to the path examples/ and run the demo scripts. You suggestions and remarks are welcomed.
+For usage of the package, go to the path examples/ and run the demo scripts. Your suggestions and remarks are welcome.
 
 Author: Han Wang, Email: han.wang@ens.fr
