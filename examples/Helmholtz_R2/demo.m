@@ -1,4 +1,4 @@
-%% Demo of the Helmholtz class
+%% Demo of the Helmholtz_R2 class
 % This script shows how to use |PDE.Helmhotz_R2| class for data simulation and reconstruction of
 % scattering coefficients. We calculate also the shape decsriptor which is
 % invariant to the translation ans rotation (but not to scaling).
@@ -22,7 +22,8 @@ B = shape.Ellipse(1,1/2,2^9);
 % B = shape.Imgshape('../images/Letters/R.png', 2^10);
 
 %%
-% Make (multiple) inclusion(s)
+% Make (multiple) inclusion(s). The inclusion D is obtained by rotating and
+% translating the reference shape B.
 D{1} = (B<(0.2*pi)) + 0.25*[1,1]';
 
 %%
@@ -37,20 +38,15 @@ pmeb = 3; pmtt = 3;
 
 %%
 % Make the acquisition configuration. With the class |acq.Planewave|, we make equally distributed
-% sources/receivers on a circle of center |mcenter| with radius |mradius|.
+% sources/receivers on a circle.
 N0 = 51; % Number of sources (and receivers)
 cfg = acq.Planewave([0,0]', 2.5, N0, N0, [1, 2*pi, 2*pi]);
 
 %%
+% Initialize an |Helmholtz_R2| object 
 freq = pi; % Working frequency of sources
-
 P = PDE.Helmholtz_R2(D, pmtt, pmeb, pmtt_bg, pmeb_bg, cfg); 
-
 figure; plot(P, 'LineWidth', 1); axis image;
-
-% xs = cfg.src(1); Sx = linspace(-3,3,100); 
-% F = PDE.Conductivity_R2.solve_forward(D, 0, xs, Sx, Sx);
-% figure; imagesc(F); colorbar()
 
 %% Simulation of the MSR data
 freq = pi;
@@ -71,6 +67,8 @@ P.plot_field(sidx, F, F_bg, SX, SY, 50);
 ord = floor((N0-1)/2); 
 % ord = 4;
 
+%%
+% SCT of the shape |D| and the reference shape |B|
 WD = asymp.SCT.theoretical_SCT(D, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 WB = asymp.SCT.theoretical_SCT(B, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 
@@ -81,11 +79,17 @@ WB = asymp.SCT.theoretical_SCT(B, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 nlvl = 0.1; 
 data = P.add_white_noise(data, nlvl);
 
-MSR = data.MSR{1};
-% MSR = data.MSR_noisy{1};
+% MSR = data.MSR{1};
+MSR = data.MSR_noisy{1};
 
+%%
+% Reconstruction by analytical inversion. This works only for equally
+% distributed sources and receivers.
 out = P.reconstruct_SCT_analytic(MSR, freq, ord);
 
+%%
+% Show error
+disp('Relative reconstruction error:')
 norm(out.SCT-WD,'fro')/norm(WD,'fro')
 
 disp('Relative truncation error:')
@@ -93,7 +97,9 @@ out.res/norm(MSR,'fro')
 
 %% Compute the shape descriptor from SCT
 
-Nv = 256; % Resolution in frequency domain of the shape descriptor S
+%%
+% Resolution in frequency domain of the shape descriptor S
+Nv = 256; 
 %%
 % Shape descriptor of the reference shape B
 [S0, G0] = dico.SCT.ShapeDescriptor_SCT(WB, Nv);

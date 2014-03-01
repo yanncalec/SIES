@@ -14,28 +14,21 @@ addpath('../../');
 
 %% Load the dictionary
 load('~/Data/dico/CGPT/smalldico_CGPT.mat');
-mydico = Dico;
-lendico = length(mydico.B);
 
-%%
-% Names of dictionary elements
-names = {};
-for n=1:lendico
-    names{n} = mydico.B{n}.name_str;
-end
+lendico = length(Dico.B);
 
 %% Simulation and identification for a fixed dictionary element
 
 %%
 % Choose one element
-B = mydico.B{4};
+B = Dico.B{4};
 % figure; plot(B, 'LineWidth', 2); axis image;
 
 %%
 % Make inclusion
 D{1}=(B<(0.2*pi))*0.75 + 0.25*[1,1]';
-cnd = mydico.cnd;
-pmtt = mydico.pmtt;
+cnd = Dico.cnd;
+pmtt = Dico.pmtt;
 
 %% Set up an environment for experience
 % The sources/receptors are distributed on a circle whose center is closed
@@ -75,7 +68,7 @@ out{1} = P.reconstruct_CGPT_analytic(MSR, ord);
 
 %% Dictionary matching
 [I1, I2, ~] = dico.CGPT.ShapeDescriptor_CGPT(out{1}.CGPT);
-[err, idx] = dico.CGPT.SD_Matching(I1, I2, mydico.I1, mydico.I2, cord);
+[err, idx] = dico.CGPT.SD_Matching(I1, I2, Dico.I1, Dico.I2, cord);
 
 %%
 % Interpretation of the result. We show in a bar figure the similarity
@@ -97,7 +90,7 @@ set(gca, 'XTickLabel',names, 'XTick',1:lendico)
 Err={}; Idx={};
 
 for n=1:lendico
-    B = mydico.B{n};
+    B = Dico.B{n};
     
     D{1}=(B<(0.2*pi))*0.75 + 0.25*[1,1]';
     
@@ -112,7 +105,7 @@ for n=1:lendico
     out{1} = P.reconstruct_CGPT_analytic(MSR, ord);
     
     [I1, I2, ~] = dico.CGPT.ShapeDescriptor_CGPT(out{1}.CGPT);
-    [toto1, toto2] = dico.CGPT.SD_Matching(I1, I2, mydico.I1, mydico.I2, cord);
+    [toto1, toto2] = dico.CGPT.SD_Matching(I1, I2, Dico.I1, Dico.I2, cord);
     
     Err{n} = cell2mat(toto1);
     Idx{n} = cell2mat(toto2);

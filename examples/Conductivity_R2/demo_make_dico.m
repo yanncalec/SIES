@@ -48,7 +48,7 @@ end
 %%
 % Names of dictionary elements
 names = {};
-for n=1:lendico
+for n=1:length(B)
     names{n} = B{n}.name_str;
 end
 
