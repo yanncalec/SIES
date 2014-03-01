@@ -14,7 +14,7 @@ addpath('../../');
 
 %% Load the dictionary
 load('~/Data/dico/CGPT/smalldico_CGPT.mat');
-mydico = dico_struct;
+mydico = Dico;
 lendico = length(mydico.B);
 
 %%

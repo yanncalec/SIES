@@ -7,38 +7,109 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
         pmeb_bg % background magnetic parameter (permeability), or epsilon_0
         pmtt_bg % background electric parameter (permittivity), or mu_0
         
-        wavenb_bg % background wave number k0
-        wavenb % wave number k
+        pmtt % permittivity constant of inclusion
+        pmeb % permeability constant of inclusion        
     end
     
     methods
-        function obj = Helmholtz_R2(D, cfg, pmeb_bg, pmtt_bg)
+        function val = wavenb(obj, freq)
+        % the frequency dependant wave number k for the inclusion
+            val = tools.Helmholtz.wavenb(freq, obj.pmeb, obj.pmtt);
+        end                
+
+        function val = wavenb_bg(obj, freq)
+        % the frequency dependant wave number k0 for the background
+            val = tools.Helmholtz.wavenb(freq, obj.pmeb_bg, obj.pmtt_bg);
+        end                
+
+        function obj = Helmholtz_R2(D, pmeb, pmtt, pmeb_bg, pmtt_bg, cfg)
+
+            if iscell(D) && length(D)>1
+                error('Multi-inclusions for Helmholtz equation are not supported in the current version!');
+            end
+            
             obj = obj@PDE.Small_Inclusions(D, cfg);
-            obj.pmeb_bg = pmeb_bg;
+
+            if (pmtt==pmtt_bg) || (pmtt<0)
+                error('The permittivity constant must be positive and different from the background');
+            end
+            
+            if pmeb==pmeb_bg || pmeb<0
+                error('The permeability constant must be positive and different from the background');
+            end
+            
+            %             if length(pmtt)<obj.nbIncls || length(pmeb)<obj.nbIncls
+            %                 error('The value of permeability and permittivity must be specified for each inclusion');
+            %             end
+            
+            %             for n=1:obj.nbIncls
+            %                 if pmtt(n)==pmtt_bg || pmtt(n)<0
+            %                     error('The permittivity constant must be positive and different from the background');
+            %                 end
+            %
+            %                 if pmeb(n)==pmeb_bg || pmeb(n)<0
+            %                     error('The permeability constant must be positive and different from the background');
+            %                 end
+            %             end
+            
+            obj.pmtt = pmtt;
+            obj.pmeb = pmeb;
+
             obj.pmtt_bg = pmtt_bg;
-        end     
-        
-        function [F, F_bg, SX, SY, mask] = calculate_field(obj, freq, xs, width, N)
+            obj.pmeb_bg = pmeb_bg;
+        end
+                
+        function [F, F_bg, SX, SY, mask] = calculate_field(obj, freq, s, z0, width, N)
         % Calculate the background potential field and the potential field due to
-        % the inclusion.
+        % the inclusion.% freq: the working frequency, a scalar
+        %
         % Inputs:
+        % freq: the working frequency, a scalar
         % s: index of the source
-        % xlim: interval in x-axis of rectangular region
-        % ylim: interval in y-axis of rectangular region
-        % dh: sampling step
+        % z0: center of the mesh
+        % width: width of the mesh
+        % N: number of points by side
+        %
         % Outputs:
         % F: potential field u
         % F_bg: potential field U
-        % SX, SY: coordinates in x and y-axis of the rectangular region
-                        
+        % Sx, Sy: coordinates in x and y-axis of the rectangular region
+        % mask: binary mask where 0 indicates position where the potential may be numerically
+        % undefined
+
             if obj.nbIncls > 1
-                error('Multiple inclusions are not supported in current version!');
+                error('Multiple inclusions are not supported in the current version!');
             else
                 D = obj.D{1};
-                [SX, SY, mask] = D.interior_mesh(max(width, obj.aradius*2*1.5), N);
                 
-                [F, F_bg] = PDE.Helmholtz_R2.evaluate_field(D, freq, xs, obj.pmeb_bg, obj.pmtt_bg, ...
-                                                            SX, SY, mask);
+                epsilon = width/(N-1)/5;
+                
+                [SX, SY, mask] = obj.D{1}.boundary_off_mask(z0, width, N, epsilon);
+                
+                SXi = SX(find(mask)); SYi = SY(find(mask));
+                Zi = [SXi(:) SYi(:)]';
+                SXo = SX(find(1-mask)); SYo = SY(find(1-mask));
+                Zo = [SXo(:) SYo(:)]';
+                
+                % Resolution of the system 5.11
+                xs = obj.cfg.src(s);
+                sol = PDE.Helmholtz_R2.solve_forward(D, freq, xs, obj.pmeb, obj.pmtt, obj.pmeb_bg, obj.pmtt_bg);
+                vphi = sol(1:size(sol,1)/2, :);
+                vpsi = sol(size(sol,1)/2+1:end, :);
+                
+                k0 = sqrt(obj.pmtt_bg*obj.pmeb_bg)*freq;
+                umU = ops.SingleLayer_H.eval(k0, D, vpsi, Zo);
+                U = tools.Helmholtz.plane_wave(k0, Zo, xs);
+                uo = umU(:)+U(:);
+                
+                ks = sqrt(obj.pmtt*obj.pmeb)*freq;
+                ui =  ops.SingleLayer_H.eval(ks, D, vphi, Zi);
+                
+                F=zeros(size(mask));
+                F(find(mask)) = ui;
+                F(find(1-mask)) = uo;
+                F_bg = tools.Helmholtz.plane_wave(k0, [SX(:) SY(:)]', xs);
+                F_bg = reshape(F_bg, size(mask));
             end
         end
         
@@ -46,16 +117,8 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
 
         plot_field(obj, F, F_bg, SX, SY, nbLine, varargin)        
     
-        out = reconstruct_SCT(obj, MSR, ord, maxiter, tol)
-        out = reconstruct_SCT_analytic(obj, MSR, ord)
-
-        function val = get.wavenb_bg(obj)
-            val = obj.freq * sqrt(obj.pmeb_bg*obj.pmtt_bg);
-        end
-        
-        function val = get.wavenb(obj)
-            val = obj.D{1}.wavenb(obj.freq);
-        end
+        out = reconstruct_SCT(obj, MSR, freq, ord, maxiter, tol)
+        out = reconstruct_SCT_analytic(obj, MSR, freq, ord)
 
         function A = MSR2FFP(obj, V, sfreq, mask)            
         % Convert MSR to far field pattern
@@ -95,27 +158,27 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
             % W = wkeep(toto, size(W0)); % keep the central part
         end
         
-        function M = system_matrix_block_A11(freq, D, type, step)
-            k = D.kvalH(freq);
+        function M = system_matrix_block_A11(freq, D, type, step, pmeb, pmtt)
+            k = tools.Helmholtz.wavenb(freq, pmeb, pmtt);
             SH = ops.SingleLayer_H(k, D, type, step);
             M = SH.stiffmat;           
         end
         
         function M = system_matrix_block_A12(freq, D, type, step, pmeb_bg, pmtt_bg)
-            k0 = freq*sqrt(pmtt_bg * pmeb_bg);
+            k0 = tools.Helmholtz.wavenb(freq, pmeb_bg, pmtt_bg);
             SH = ops.SingleLayer_H(k0, D, type, step);
             M = -1 * SH.stiffmat; 
         end
         
-        function M = system_matrix_block_A21(freq, D, type, step)
-            k = D.kvalH(freq);
+        function M = system_matrix_block_A21(freq, D, type, step, pmeb, pmtt)
+            k = tools.Helmholtz.wavenb(freq, pmeb, pmtt);
             Id = ops.Ident(D, type, step);
             KsH = ops.Kstar_H(k, D, type, step);
-            M = (-1/2*Id.stiffmat + KsH.stiffmat)/D.pmeb;
+            M = (-1/2*Id.stiffmat + KsH.stiffmat)/pmeb;
         end
         
         function M = system_matrix_block_A22(freq, D, type, step, pmeb_bg, pmtt_bg)
-            k0 = freq*sqrt(pmeb_bg*pmtt_bg);
+            k0 = tools.Helmholtz.wavenb(freq, pmeb_bg, pmtt_bg);
             Id = ops.Ident(D, type, step);
             KsH = ops.Kstar_H(k0, D, type, step);
             M = - (1/2*Id.stiffmat + KsH.stiffmat)/pmeb_bg;
@@ -125,7 +188,7 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
         % Compute the vector of right hand side in eq. 5.11 of [1], namely, U and \partialU\partial\nu,
         % where U is the plane wave: e^{k*i*<\xi,x>}
             
-            k0 = freq*sqrt(pmtt_bg*pmeb_bg);
+            k0 = tools.Helmholtz.wavenb(freq, pmeb_bg, pmtt_bg);
             s1 = tools.Helmholtz.plane_wave(k0, D.points, Xi);
             s2 = tools.Helmholtz.plane_wave_Dn(k0, D, Xi)/pmeb_bg;
 
@@ -137,14 +200,14 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
         % Compute the vector of right hand side in eq. 5.11 of [1], namely, U and \partialU\partial\nu,
         % where U is the cylindrical wave: Jm(k_0|x|)e^{im theta_x}
 
-            k0 = freq*sqrt(pmtt_bg*pmeb_bg);
+            k0 = tools.Helmholtz.wavenb(freq, pmeb_bg, pmtt_bg);
             s1 = tools.Helmholtz.cylind_wave(k0, m, D.points);
             s2 = tools.Helmholtz.cylind_wave_Dn(k0, m, D)/pmeb_bg;
 
             b = [s1; s2];
         end
         
-        function [sol] = solve_forward(D, freq, Xi, pmeb_bg, pmtt_bg)
+        function [sol] = solve_forward(D, freq, Xi, pmeb, pmtt, pmeb_bg, pmtt_bg)
         % Solve the forward problem 5.11 of [1] using plane wave as sources U.
             
             if length(freq)>1
@@ -152,9 +215,9 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
             end
 
             % Construct the blocks of the system matrix
-            matrix_A = PDE.Helmholtz_R2.system_matrix_block_A11(freq, D, 'P0', 1);
+            matrix_A = PDE.Helmholtz_R2.system_matrix_block_A11(freq, D, 'P0', 1, pmeb, pmtt);
             matrix_B = PDE.Helmholtz_R2.system_matrix_block_A12(freq, D, 'P0', 1, pmeb_bg, pmtt_bg);
-            matrix_C = PDE.Helmholtz_R2.system_matrix_block_A21(freq, D, 'P0', 1);
+            matrix_C = PDE.Helmholtz_R2.system_matrix_block_A21(freq, D, 'P0', 1, pmeb, pmtt);
             matrix_D = PDE.Helmholtz_R2.system_matrix_block_A22(freq, D, 'P0', 1, pmeb_bg, pmtt_bg);
 
             b_source = PDE.Helmholtz_R2.source_vector(D, freq, Xi, pmeb_bg, pmtt_bg);
@@ -169,14 +232,14 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
         % %     sol = matrix_BEM\b;
         % % end
         
-        function [sol] = solve_forward_cw(D, freq, m, pmeb_bg, pmtt_bg)
+        function [sol] = solve_forward_cw(D, freq, m, pmeb, pmtt, pmeb_bg, pmtt_bg)
         % Solve the forward problem 5.11 of [1] using cylindrical wave
         % Um(x)=Jm(k_0|x|)e^{imtheta_x} as source.
 
             % Construct the blocks of the system matrix
-            matrix_A = PDE.Helmholtz_R2.system_matrix_block_A11(freq, D, 'P0', 1);
+            matrix_A = PDE.Helmholtz_R2.system_matrix_block_A11(freq, D, 'P0', 1, pmeb, pmtt);
             matrix_B = PDE.Helmholtz_R2.system_matrix_block_A12(freq, D, 'P0', 1, pmeb_bg, pmtt_bg);
-            matrix_C = PDE.Helmholtz_R2.system_matrix_block_A21(freq, D, 'P0', 1);
+            matrix_C = PDE.Helmholtz_R2.system_matrix_block_A21(freq, D, 'P0', 1, pmeb, pmtt);
             matrix_D = PDE.Helmholtz_R2.system_matrix_block_A22(freq, D, 'P0', 1, pmeb_bg, pmtt_bg);
 
             b = PDE.Helmholtz_R2.source_vector_cw(D, freq, m, pmeb_bg, pmtt_bg);
@@ -185,7 +248,7 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
             sol = matrix_BEM\b;
         end
                 
-        function [F, F_bg] = evaluate_field(D, freq, xs, pmeb_bg, pmtt_bg, SX, SY, mask)
+        function [F, F_bg] = evaluate_field(D, freq, xs, pmeb, pmtt, pmeb_bg, pmtt_bg, SX, SY, mask)
         % Evaluate the solution field u and U for a given source xs at the points of coordinates given by
         % SX and SY, which should not contain the interior of D.
             
@@ -195,7 +258,7 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
             Zo = [SXo(:) SYo(:)]';
             
             % Resolution of the system 5.11
-            sol = PDE.Helmholtz_R2.solve_forward(D, freq, xs, pmeb_bg, pmtt_bg);
+            sol = PDE.Helmholtz_R2.solve_forward(D, freq, xs, pmeb, pmtt, pmeb_bg, pmtt_bg);
             vphi = sol(1:size(sol,1)/2, :);
             vpsi = sol(size(sol,1)/2+1:end, :);
 
@@ -204,7 +267,7 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
             U = tools.Helmholtz.plane_wave(k0, Zo, xs); 
             uo = umU(:)+U(:);
             
-            ks = sqrt(D.pmtt*D.pmeb)*freq;
+            ks = sqrt(pmtt*pmeb)*freq;
             ui =  ops.SingleLayer_H.eval(ks, D, vphi, Zi);
             
             F=zeros(size(mask));
@@ -243,54 +306,3 @@ classdef Helmholtz_R2 < PDE.Small_Inclusions
     
     end    
 end
-
-% function out = data_simulation(obj, freq)
-% % Simulation of the MSR matrix.
-%     if obj.nbIncls > 1
-%         error('NotImplemented: data_simulation for multi-inclusions.')
-%     else   
-%         if nargin < 2
-%             freq = obj.freq;
-%         end
-
-%         rcv = obj.cfg.all_rcv;
-%         src = obj.cfg.all_src;
-
-%         for n=1:length(obj.freq)
-%             out.MSR{n} = PDE.Helmholtz_R2.MSR_simulation(obj.D{1}, freq(n), obj.pmtt_bg, ...
-%                                                          obj.pmeb_bg, rcv, src);
-%         end
-%     end
-% end
-
-
-
-
-
-%         function [sol] = solve_Helm_sys_pwv(D, freq, X, theta_Xi, pmeb_bg, epsilon_0)
-%         %Solve the system of [\phi,\psi] in the Helmholtz equation, for each value of frequency, 
-%         %we have corresponding pair of solution, we took U is the plane wave function%
-
-%             type1 = 'P0'; step = 1; 
-
-% %             Psi_int = D.sigma(:); 
-% %             Phi_int = Psi_int; 
-
-%             % Construct the blocks of the system matrix
-%             matrix_A = PDE.Helmholtz_R2.system_matrix_block_A11(freq, D, type1, step);
-%             matrix_B = PDE.Helmholtz_R2.system_matrix_block_A12(freq, D, type1, step, pmeb_bg, epsilon_0);
-%             matrix_C = PDE.Helmholtz_R2.system_matrix_block_A21(freq, D, type1, step);
-%             matrix_D = PDE.Helmholtz_R2.system_matrix_block_A22(freq, D, type1, step, pmeb_bg, epsilon_0);
-
-
-%             b_source = PDE.Helmholtz_R2.b_vector(D, freq, X, theta_Xi, pmeb_bg, epsilon_0);
-
-% %             matrix_BEM = [[matrix_A matrix_B] ; [matrix_C matrix_D]; 
-% %                           [reshape(Psi_int, 1, []), zeros(1,size(matrix_A,2))]; [zeros(1,size(matrix_A,2)), ...
-% %                                 reshape(Phi_int,1,[])]] ;
-% %             
-% %             sol = matrix_BEM\[b_source; zeros(1, size(b_source,2)); zeros(1, size(b_source,2))] ;
-
-%             matrix_BEM = [[matrix_A matrix_B] ; [matrix_C matrix_D]] ;
-%             sol = matrix_BEM\b_source ;
-%         end        

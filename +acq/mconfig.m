@@ -111,7 +111,7 @@ classdef mconfig
             for g=1:obj.Ng
                 [src, rcv] = obj.group(g);
                 plot(src(1,:), src(2,:), 'x'); hold on;
-                plot(rcv(1,:), rcv(2,:), '.');
+                plot(rcv(1,:), rcv(2,:), 'o');
             end
         end        
 

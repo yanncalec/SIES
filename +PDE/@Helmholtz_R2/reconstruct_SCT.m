@@ -1,4 +1,4 @@
-function out = reconstruct_SCT(obj, MSR, ord, maxiter, tol)
+function out = reconstruct_SCT(obj, MSR, freq, ord, maxiter, tol)
 
     if nargin < 5
         tol = 1e-5;
@@ -9,7 +9,7 @@ function out = reconstruct_SCT(obj, MSR, ord, maxiter, tol)
 
     % ord = min(ord, min(floor((obj.cfg.Ns-1)/2), floor((obj.cfg.Nr-1)/2))) ; % maximum order
     
-    op = PDE.Helmholtz_R2.make_linop_SCT(obj.cfg, obj.wavenb_bg, ord); % Construct the linear operator L
+    op = PDE.Helmholtz_R2.make_linop_SCT(obj.cfg, obj.wavenb_bg(freq), ord); % Construct the linear operator L
     L = op.L;
 
     X = lsqr(L, MSR(:), tol, maxiter); % LSQR method

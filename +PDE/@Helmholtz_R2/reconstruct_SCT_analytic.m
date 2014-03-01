@@ -1,11 +1,11 @@
-function out = reconstruct_SCT_analytic(obj, MSR, ord)
+function out = reconstruct_SCT_analytic(obj, MSR, freq, ord)
 
 if isa(obj.cfg, 'acq.Planewave') && obj.cfg.equispaced
 
     % ord = min(ord, min(floor((obj.cfg.Ns-1)/2), floor((obj.cfg.Nr-1)/2))) ;
 
     z0 = obj.cfg.center;
-    k0 = obj.wavenb_bg; 
+    k0 = obj.wavenb_bg(freq); 
  
     As = PDE.Helmholtz_R2.make_matrix_Src(k0, obj.cfg.all_src, z0, ord);    
     Br = PDE.Helmholtz_R2.make_matrix_Rcv(k0, obj.cfg.rcv(1), z0, ord);

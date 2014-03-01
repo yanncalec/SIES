@@ -18,7 +18,7 @@ for n=1:length(D)
     mD = squeeze(mean(mean(D{n},1),2));
     mS = squeeze(mean(mean(S,1),2));
 
-    [serr, vscl, idx] = dico.Helmholtz.scaling_lookup_table(mD, frange, mS, sfrange);
+    [serr, vscl, idx] = dico.SCT.scaling_lookup_table(mD, frange, mS, sfrange);
     err(n) = serr(idx);
     scl(n) = vscl(idx);
 end

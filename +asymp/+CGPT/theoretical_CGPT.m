@@ -22,7 +22,7 @@ function M = theoretical_CGPT(D, lambda, ord)
 %
 
 if ~iscell(D)
-    D= {D};
+    D = {D};
 end
 
 nbPoints = D{1}.nbPoints; % all C2boundary objects must have the same value of nbPoints
@@ -67,30 +67,4 @@ M = asymp.CGPT.cell2mat({CC,CS,SC,SS});
 % symmetric, not hermitian.
 % M = (M+M.')/2;
 end
-
-% %lambda = (kappa+1)/2/(kappa-1) ;
-% Ks = ops.Kstar.make_kernel_matrix(D, tvec, normal, avec, sigma);
-
-% A = lambda*eye(nbPoints, nbPoints) - Ks ;
-
-% [L,U] = lu(A); % LU decomposition of A
-
-% for m=1:ord
-%     dm = m*cpoints.^(m-1); % grad(z^m)     
-%     nu_grad = normal(1,:) .* dm + normal(2,:) .* dm * 1i;
-
-%     for n=1:ord
-%         zn = cpoints.^n;
-
-%         realPhi = U\(L\real(nu_grad(:))); 
-%         realPhi = reshape(realPhi, 1, []);
-%         imagPhi = U\(L\imag(nu_grad(:)));
-%         imagPhi = reshape(imagPhi, 1, []);
-
-%         CC(m, n) = (real(zn).*realPhi)*sigma(:);
-%         CS(m, n) = (imag(zn).*realPhi)*sigma(:);
-%         SC(m, n) = (real(zn).*imagPhi)*sigma(:);
-%         SS(m, n) = (imag(zn).*imagPhi)*sigma(:);
-%     end
-% end
 

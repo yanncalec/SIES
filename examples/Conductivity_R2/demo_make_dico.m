@@ -65,15 +65,15 @@ end
 %% 
 % Draw the dictionary shapes and save the dictionary
 
-dico_struct.ord = ord;
-dico_struct.B = B;
-dico_struct.cnd = cnd;
-dico_struct.pmtt = pmtt;
-dico_struct.lambda = lambda;
-dico_struct.CGPT = CGPT;
-dico_struct.I1 = I1;
-dico_struct.I2 = I2;
-dico_struct.names = names;
+Dico.ord = ord;
+Dico.B = B;
+Dico.cnd = cnd;
+Dico.pmtt = pmtt;
+Dico.lambda = lambda;
+Dico.CGPT = CGPT;
+Dico.I1 = I1;
+Dico.I2 = I2;
+Dico.names = names;
 
 if mode == 0
     % for small dico
@@ -81,12 +81,12 @@ if mode == 0
         fig=figure; plot(B{n}, 'LineWidth', 2); axis image;
         saveas(fig, ['~/Data/outputs/figures/small_dico/',B{n}.name_str,'.eps'], 'psc2');    
     end
-    save('~/Data/dico/CGPT/smalldico_CGPT.mat','dico_struct','-v7.3');
+    save('~/Data/dico/CGPT/smalldico_CGPT.mat','Dico','-v7.3');
 else
     % for letters
     for n=1:length(B)
         fig=figure; plot(B{n}, 'LineWidth', 2); axis image;
         saveas(fig, ['~/Data/outputs/figures/letter_dico/',B{n}.name_str,'.eps'], 'psc2');
     end
-    save('~/Data/dico/CGPT/letterdico_CGPT.mat','dico_struct','-v7.3');
+    save('~/Data/dico/CGPT/letterdico_CGPT.mat','Dico','-v7.3');
 end

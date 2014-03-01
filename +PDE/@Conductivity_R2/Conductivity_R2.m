@@ -80,6 +80,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
     methods
         function obj = Conductivity_R2(D, cnd, pmtt, cfg)
             obj = obj@PDE.Small_Inclusions(D, cfg);
+
             if length(cnd)<obj.nbIncls || length(pmtt)<obj.nbIncls
                 error('The value of conductivity and permittivity must be specified for each inclusion');
             end
@@ -89,6 +90,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
                     error('The conductivity constant must be positive and different from 1');
                 end
             end
+            
             obj.cnd = cnd; obj.pmtt = pmtt;
             
             obj.KsdS = asymp.CGPT.make_block_matrix(obj.D); 
@@ -96,7 +98,6 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
         end
         
         out = data_simulation(obj, freq)
-        out = data_simulation_stream(obj, Z, A, freq)
 
         % Calculate and plot the potential fields 
         [F, F_bg, Sx, Sy, mask] = calculate_field(obj, freq, s, z0, width, N)        
