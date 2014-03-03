@@ -86,21 +86,21 @@ for n=1:length(B)
     Dico.SD_G{n} = G; % Shape descriptor G    
 end
 
-clear SCT S G;
-
-Dico.sfrange = sfrange;
-Dico.sclrange = sclrange;
-Dico.frange = frange;
-Dico.freq = freq;
-
-Dico.ord = ord;
-Dico,Nv = Nv;
+%% Save the dictionary
 Dico.B = B;
 Dico.pmtt = pmtt;
 Dico.pmeb = pmeb;
 Dico.pmtt_bg = pmtt_bg;
 Dico.pmeb_bg = pmeb_bg;
 Dico.names = names;
+
+Dico.sclrange = sclrange;
+Dico.sfrange = sfrange;
+Dico.frange = frange;
+Dico.freq = freq;
+
+Dico.ord = ord;
+Dico,Nv = Nv;
 
 save('~/Data/dico/SCT/smalldico_SCT.mat','Dico','-v7.3');
 

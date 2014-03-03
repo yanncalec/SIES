@@ -1,39 +1,34 @@
 classdef OrthoWvl < wavelet.Frame
 % 2D Orthogonal wavelet class with periodic boundary condition
 % 
-% We introduce a augmented ROI (AROI) which is one scale finer than the scale Jmin
-% (Jnum=Jmin-1), and slightly larger than the ROI so that wavelets of scales from
-% Jmin to Jmax as well as scaling functions of scale Jmax intersecting with ROI do
-% not intersect the boundary of AROI.
+% We introduce an augmented ROI (AROI) which is one scale finer than the scale Jmin (Jnum=Jmin-1),
+% and slightly larger than the ROI so that wavelets of scales from Jmin to Jmax (as well as scaling
+% functions of scale Jmax) intersecting with ROI do not intersect the boundary of AROI.
 %
-% For a function f defined on the AROI, its point values (up to a constant factor) at
-% the grid of the scale Jnum are used as input to the wavelet decomposition, and the
-% fast transform algorithm decomposes it til the scale Jmax. At each scale the
-% decomposition increases the dimension (due to the non-periodic convolution, so it
-% is not orthogonal). At the synthesis the dimension will also increase, but the
-% reconstruction limited on the grid of AROI is identical to the original f. What is
-% synthesized with the coeffcients of scales from Jmax to Jmin, is the approximation
-% coeffcients of the scale Jmin-1=Jnum.
+% For a function f defined on the AROI, its point values (up to a constant factor) at the grid of
+% the scale Jnum are used as input to the wavelet decomposition, and the fast transform algorithm
+% decomposes it til the scale Jmax. At each scale the decomposition increases the dimension (due to
+% the non-periodic convolution, the transform it is not orthogonal). At the synthesis the dimension
+% will also increase, but the reconstruction limited on the grid of AROI is identical to the
+% original f. What is synthesized with the coeffcients of scales from Jmax to Jmin, is the
+% approximation coeffcients of the scale Jmin-1=Jnum.
 % 
-% Furthermore, the position number n\in\Z^2 of wavelet coefficients are tracked
-% during the decomposition. At each scale the position index ranges are stored in
-% wrangex and wrangey, which are necessary when we do interpolation with wavelets. The
-% wavelet contributing to the ROI (called active) are coded as a 0-1 mask and stored
-% in wmask. wmask.A has the same dimension as the approximation coefficient (A
-% returned by analysis), similarly wmask.D{j,k} has the same dimension as detail
-% coefficients (scale index j, direction k=1,2,3). To make it clear: wmask has the
-% same dimension as that of the wavelet coefficient, and ApprxSpace{n} records the
-% dimension of the active wavelet of a scale (a submatrix of wmask.A or wmask.D)
+% Furthermore, the position number n\in\Z^2 of wavelet coefficients are tracked during the
+% decomposition. At each scale the ranges of the position index are stored in wrangex and wrangey,
+% which are necessary when we do interpolation with wavelets. The wavelet contributing to the ROI
+% (called active) are coded as a 0-1 mask and stored in wmask. wmask.A has the same dimension as the
+% approximation coefficient (A returned by analysis), similarly wmask.D{j,k} has the same dimension
+% as detail coefficients (scale index j, direction k=1,2,3). To make it clear: wmask has the same
+% dimension as that of the wavelet coefficient, and ApprxSpace{n} records the dimension of the
+% active wavelet of a scale (a submatrix of wmask.A or wmask.D)
 %
-% Convention: A 2D image is the value of a function F evaluated on a 2d grid
-% (e.g. inside [-1,1]X[-1,1]). The grid is generated using the function 'meshgrid' by
-% increasing in both x and y axis, e.g. [Sx, Sy]=meshgrid(-1:0.1:1,
-% -1:0.1:1). Visually, the 2D image is reversed up-down. The same order of
-% representation must be respected in all calculations, since the wavelet transform
-% of a flipped up-down or left-right image is not the same (not even in reversed
-% order) of the original one. It's only at the last visulization step that we correct
-% the image using the function flipud. See for example ShiftInvSpace.mesh for
-% details.
+% Convention: A 2D image is the value of a function F evaluated on a 2d grid (e.g. inside
+% [-1,1]X[-1,1]). The grid is generated using the function 'meshgrid' by increasing in both x and y
+% axis, e.g. [Sx, Sy]=meshgrid(-1:0.1:1, -1:0.1:1). Visually, the 2D image is flipped up-down. The
+% same order of representation must be respected in all calculations, since the wavelet transform of
+% a flipped up-down or left-right image is not the same (not even in reversed order) of the original
+% one. It's only at the last visulization step that we correct the image using the function
+% flipud. See for example ShiftInvSpace.mesh for details.
 %
 
     properties(SetAccess=protected)
@@ -386,9 +381,11 @@ classdef OrthoWvl < wavelet.Frame
         % Make wavelet interpolation matrix on a ROI
         [Phi, dPhiX, dPhiY] = interpolation_mat_ROI(obj, X, J) 
         
-        function W = WPT_std(obj, D, freq, nbScl)
+        function W = WPT_std(obj, D, kappa, nbScl)            
+        % admittivity: kappa = cnd + 1i * pmtt * freq
+            
             W = wavelet.OrthoWvl.theoretical_WPT_std(D.points, D.tvec, D.normal, D.avec, D.sigma, ...
-                                                     D.kappa(freq), D.center_of_mass, obj.Jmax, ...
+                                                     kappa, D.center_of_mass, obj.Jmax, ...
                                                      obj.ApprxSpace{1}, obj.DetailSpace(1:nbScl,:), ...
                                                      obj.Tpsi, obj.Tphi, obj.Gpsi, obj.Gphi);
         end

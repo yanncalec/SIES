@@ -14,7 +14,10 @@ function WPT = theoretical_WPT_std(D, tvec, normal, avec, sigma, kappa, Z0, Jmax
     %
 
     nbPoints = size(D,2);
-    trunc_epsilon = 1e-15;
+        
+    % Threshold of truncation. Coefficients smaller than this value are ignored.
+    trunc_epsilon = 1e-10;
+    
     nbDir = 3;
 
     % Number of detail spaces
