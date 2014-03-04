@@ -2,7 +2,7 @@
 
 %% 
 % Load the dictionary
-load ~/Data/dico/SCT/smalldico.mat;
+load ~/Data/dico/SCT/smalldico_SCT.mat;
 
 Nf = length(Dico.freq);
 sclrange = Dico.sclrange;
@@ -12,10 +12,6 @@ pmtt = Dico.pmtt;
 pmeb = Dico.pmeb;
 pmtt_bg = Dico.pmtt_bg;
 pmeb_bg = Dico.pmeb_bg;
-
-%%
-% Number of sources (and receivers)
-N0 = 91; 
 
 %%
 % Transform parameters of a standard shape
@@ -32,6 +28,7 @@ sfreq = linspace(sfrange(1), sfrange(2), Nsf);
 % sources/receivers on a circle of center at [0,0]' with radius |mradius|.
 
 N0 = 91; % Number of sources (and receivers)
+
 cfg = acq.Planewave([0,0]', 3, N0, N0, [1, 2*pi, 2*pi]);
 
 disp('Data simulation...');
@@ -54,4 +51,4 @@ Data.rtn = rtn;
 Data.sfreq = sfreq;
 Data.cfg = cfg;
 
-save('~/Data/out/SCT/MSR.mat', 'Data', '-v7.3');
+save('~/Data/measurements/SCT/MSR.mat', 'Data', '-v7.3');

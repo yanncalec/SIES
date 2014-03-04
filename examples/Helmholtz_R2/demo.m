@@ -1,7 +1,7 @@
 %% Demo of the Helmholtz_R2 class
 % This script shows how to use |PDE.Helmhotz_R2| class for data simulation and reconstruction of
-% scattering coefficients. We calculate also the shape decsriptor which is
-% invariant to the translation ans rotation (but not to scaling).
+% scattering coefficients. We calculate also the shape descriptor which is
+% invariant to the translation and rotation (but not to scaling).
 
 %% Add path
 clear all;
@@ -44,12 +44,13 @@ cfg = acq.Planewave([0,0]', 2.5, N0, N0, [1, 2*pi, 2*pi]);
 
 %%
 % Initialize an |Helmholtz_R2| object 
-freq = pi; % Working frequency of sources
 P = PDE.Helmholtz_R2(D, pmtt, pmeb, pmtt_bg, pmeb_bg, cfg); 
 figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
-freq = pi;
+
+freq = pi; % Working frequency of sources
+
 tic
 data = P.data_simulation(freq);
 toc
