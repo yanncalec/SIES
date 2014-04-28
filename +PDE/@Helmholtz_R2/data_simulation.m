@@ -12,7 +12,7 @@ for f=1:length(freq)
     vphi = sol(1:size(sol,1)/2, :);
     vpsi = sol(size(sol,1)/2+1:end, :);
 
-    k0 = tools.Helmholtz.wavenb(freq, obj.pmeb_bg, obj.pmtt_bg);
+    k0 = tools.Helmholtz.wavenb(freq(f), obj.pmeb_bg, obj.pmtt_bg);
 
     for s=1:obj.cfg.Ns_total
         rcv = obj.cfg.rcv(s); % receivers corresponding to the s-th source
