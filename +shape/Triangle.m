@@ -43,6 +43,13 @@ classdef Triangle < shape.C2boundary
             obj.lside = a;
             obj.angl = angl;
         end
+        
+        function obj = mtimes(obj, s)
+        % Overload of the operator *
+            obj = mtimes@shape.C2boundary(obj, s);
+            obj.lside = obj.lside * s;            
+        end
+        
     end
 end
 

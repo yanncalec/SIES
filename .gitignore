@@ -1,11 +1,20 @@
-*.mexglx
-*.mexa64
-*.todo
-*.bak
-*.old
-*.mat
-*.m~
-output
-tmp
-thirdparty
-html
+# Ignore all
+*
+
+# except
+!*.m
+!*.c
+!*.tex
+
+# *.mexglx
+# *.mexa64
+# *.todo
+# *.bak
+# *.old
+# *.mat
+# *.m~
+# output
+# tmp
+# thirdparty
+# html
+# *.pdf

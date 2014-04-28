@@ -1,14 +1,18 @@
 function [F, F_bg, Sx, Sy, mask] = calculate_field(obj, f, s, z0, width, N, fpsi_bg, fpsi, fphi)
 % Calculate the background potential field and the potential field due to
-% the inclusion
+% the inclusion on a square region
 % Inputs:
 % vpsi_bg: the coefficient vector of background eq (A.2)
 % vpsi, vphi: the coefficient vector of eq (A.5)
 % f: index of the frequency
 % s: index of the source
-% xlim: interval in x-axis of rectangular region
-% ylim: interval in y-axis of rectangular region
-% dh: sampling step
+% z0: center of the square region on which the potential fields are
+% evaluated
+% width: width of the square region
+% N: number of points by side
+% fpsi_bg, fpsi, fphi: values of the functions psi_bg, psi, and phi
+% returned by data_simulation
+%
 % Outputs:
 % F: potential field u
 % F_bg: potential field U
@@ -18,7 +22,8 @@ function [F, F_bg, Sx, Sy, mask] = calculate_field(obj, f, s, z0, width, N, fpsi
     src = obj.cfg.src(s);
     dipole = obj.cfg.dipole(s);
     
-    epsilon = width/(N-1)/5; % user specified constant for the mask
+    %epsilon = width/(N-1)/5; % user specified constant for the mask
+    epsilon = 1e-5;
     
     [Sx, Sy, mask] = Omega.boundary_off_mask(z0, width, N, epsilon);
     Z = [Sx(:), Sy(:)]';

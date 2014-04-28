@@ -48,6 +48,14 @@ classdef Rectangle < shape.C2boundary
             obj.width = b;
             obj.height = a;
         end        
+        
+        function obj = mtimes(obj, s)
+        % Overload of the operator *
+            obj = mtimes@shape.C2boundary(obj, s);
+            obj.width = obj.width * s;
+            obj.height = obj.height * s;            
+        end                
+        
     end    
 end
 

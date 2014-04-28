@@ -82,13 +82,17 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
             obj = obj@PDE.Small_Inclusions(D, cfg);
 
             if length(cnd)<obj.nbIncls || length(pmtt)<obj.nbIncls
-                error('The value of conductivity and permittivity must be specified for each inclusion');
+                error('The value of conductivity and permittivity must be specified for each inclusion!');
             end
             
             for n=1:obj.nbIncls
                 if cnd(n)==1 || cnd(n)<0
-                    error('The conductivity constant must be positive and different from 1');
+                    error('The conductivity constant must be positive and different from 1!');
                 end
+                
+                if pmtt(n)<0
+                    error('The permittivity constant must be positive!');
+                end                
             end
             
             obj.cnd = cnd; obj.pmtt = pmtt;

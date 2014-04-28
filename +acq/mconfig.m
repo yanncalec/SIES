@@ -60,8 +60,8 @@ classdef mconfig
         
         function [gid, sid] = src_query(obj, s)
         % For the s-th source, get the group index and the index inside the group
-            if s>obj.Ns_total || s<1
-                error('Source index out of range');
+            if length(s)~=1 || s>obj.Ns_total || s<1
+                error('Non-scalar source index or source index out of range');
             end
             gid = floor((s-1)/obj.Ns)+1;
             sid = s - (gid-1)*obj.Ns;

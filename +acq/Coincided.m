@@ -5,7 +5,7 @@ classdef Coincided < acq.Concentric
 % arcs on a circle of measurement. This is the simplest configuration for the conductivity problem.
     
     methods
-        function obj = Coincided(Z, Rs, Ns, viewmode, grouped)
+        function obj = Coincided(Z, Rs, Ns, viewmode, grouped, neutCoeff)
         % INPUTS:
         % Z: center of the measurement circle
         % Rs: radius of the measurement circle
@@ -16,6 +16,11 @@ classdef Coincided < acq.Concentric
         %        aov: angle covered by the starting point of all arcs
         % grouped: if true each arc will be treated as an independant group (limited view), if false the whole
         % set of receivers will be visible for all sources (full view but sparse array).
+        % neutCoeff: coefficients of the neutrality condition
+
+            if nargin < 6
+                neutCoeff = [];
+            end
             
             if nargin < 5
                 grouped = 0;
@@ -25,7 +30,7 @@ classdef Coincided < acq.Concentric
                 viewmode = [1, 2*pi, 2*pi];
             end
 
-            obj = obj@acq.Concentric(Z, Rs, Ns, Rs, Ns, viewmode, grouped);
+            obj = obj@acq.Concentric(Z, Rs, Ns, Rs, Ns, viewmode, grouped, neutCoeff);
         end        
     end
 end

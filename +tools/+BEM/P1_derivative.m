@@ -12,7 +12,7 @@ end
 N = M/m; % the number of hat functions
 du = zeros(N,M) ;
 
-dhat = zeros(1,M); 
+dhat = zeros(1,M);
 dhat(1:(2*m+1)) = [ones(1,m), 0, -ones(1,m)];
 du(1,:) = circshift(dhat,[0,-m]);
 

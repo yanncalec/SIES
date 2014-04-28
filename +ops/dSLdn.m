@@ -26,15 +26,7 @@ classdef dSLdn < ops.Operators
             
             obj = obj@ops.Operators(D1, type1, step1, D2, type2, step2);
             obj.Kmat = ops.dSLdn.make_kernel_matrix(D1.points, D1.sigma, D2.points, D2.normal);
-        end
-        
-        function val = fwd(obj, f)
-            if isequal(D1,D2)
-                error('Type Error: this operator is not defined for two identical boundaries.');
-            else
-                val = fwd@ops.Operators(obj, f);
-            end
-        end
+        end        
     end
     
     methods(Static)

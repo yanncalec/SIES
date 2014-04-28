@@ -5,6 +5,10 @@ function [G] = farfieldpattern(W, Nv)
 % Outputs:
 % G: far field pattern
 
+if nargin < 2
+    Nv = 256;
+end
+
 [M,N] = size(W);
 
 if M~=N 

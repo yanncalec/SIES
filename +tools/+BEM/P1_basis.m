@@ -22,7 +22,7 @@ u = zeros(N,M) ;
 
 % We define the hat function centered at the first boundary point, which is
 % periodic.
-hat = zeros(1,M); 
+hat = zeros(1,M);
 hat(1:(2*m+1)) = [(0:m-1)/m, 1, (m-1:-1:0)/m];
 u(1,:) = circshift(hat,[0,-m]);
 

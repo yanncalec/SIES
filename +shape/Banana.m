@@ -63,6 +63,8 @@ classdef Banana < shape.C2boundary
             obj = mtimes@shape.C2boundary(obj,s);
             obj.center = s*obj.center;
             obj.center_curvature = s*obj.center_curvature;            
+            obj.axis_a = obj.axis_a * s;
+            obj.axis_b = obj.axis_b * s;            
         end
         
         function obj = lt(obj, phi)

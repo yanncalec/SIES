@@ -46,6 +46,13 @@ classdef Ellipse < shape.C2boundary
             obj.phi = 0;
         end
 
+        function obj = mtimes(obj, s)
+        % Overload of the operator *
+            obj = mtimes@shape.C2boundary(obj, s);
+            obj.axis_a = obj.axis_a * s;
+            obj.axis_b = obj.axis_b * s;            
+        end
+        
         function obj = lt(obj, phi)
         % Redefine the < operator as the rotation of the boundary
             obj = lt@shape.C2boundary(obj,phi);

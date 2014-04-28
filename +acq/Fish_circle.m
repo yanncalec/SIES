@@ -1,11 +1,11 @@
 classdef Fish_circle < acq.mconfig
-% Circular acquisition for electric fish.
-%
-% This configuration is useful for electric fish class |PDE.ElectricFish|. 
-% The fish has one eletric organ (source) and many receivers on its body, and it
-% swims in a circular trajectory while taking measurments. The position of
-% receivers depends on that of the source since they move with the fish. The
-% dipole source changes its direction with the fish's position. 
+    % Circular acquisition for electric fish.
+    %
+    % This configuration is useful for electric fish class |PDE.ElectricFish|.
+    % The fish has one eletric organ (source) and many receivers on its body, and it
+    % swims in a circular trajectory while taking measurments. The position of
+    % receivers depends on that of the source since they move with the fish. The
+    % dipole source changes its direction with the fish's position.
     
     properties(SetAccess = protected)
         dipole_prv % directions of dipole source, a cell of 2D vectors
@@ -16,20 +16,20 @@ classdef Fish_circle < acq.mconfig
         impd % impedance of the fish's skin
         dipole0 % direction the dipole source in Omega0, a 2D vector
         eorgan0 % position of the eletric organ in Omega0, a 2D vector
-
+        
         aov % total angle of view effectively covered by sources
         radius % radius of measurement circle for sources
-                
+        
         angl % rotation angle of the fish's body at different source positions
         fpos % fish's position. Be careful to not confuse fpos with src, which is the position of the
-             % electric organ.
-
-        idxRcv % index indicating the presence of receiver        
+        % electric organ.
+        
+        idxRcv % index indicating the presence of receiver
     end
     
-    methods        
+    methods
         function obj = Fish_circle(Omega, idxRcv, Z, Rs, Ns, aov, eorgan0, dipole0, ...
-                                   d0, impd)
+                d0, impd)
             % obj = Fish_circle(Omega, idxRcv, Z, Rs, Ns, aov, eorgan0, dipole0, d0, impd)
             % Omega: body of the fish, a C2boundary object
             % idxRcv: index of active receivers. If idxRcv is empty, then all
@@ -45,9 +45,9 @@ classdef Fish_circle < acq.mconfig
             
             if ~isa(Omega, 'shape.C2boundary')
                 error('Type Error: the domain must be an object of C2boundary');
-            end                
+            end
             obj.Omega0 = Omega;
-
+            
             if nargin < 10 || isempty(impd)
                 obj.impd = 0; % by default the impedance of skin is 0
             else
@@ -57,7 +57,7 @@ classdef Fish_circle < acq.mconfig
             if nargin < 9 || isempty(d0)
                 d0 = [0,0]'; % no offset by default
             end
-
+            
             % Dipole of reference
             if nargin < 8 || isempty(dipole0)
                 % by default the dipole direction is the shape's principle direction
@@ -80,7 +80,7 @@ classdef Fish_circle < acq.mconfig
                 yc = Omega.center_curvature(2);
                 x0 = Omega.center(1); y0 = Omega.center(2);
                 R = sqrt((xc-x0)^2 + (yc-y0)^2) ;
-                % Thomas' version                
+                % Thomas' version
                 %                 theta0 = atan2(y0-yc,x0-xc) ;
                 %                 a = Omega.axis_a; b = Omega.axis_b;
                 %                 alpha = 2*a/R ;
@@ -98,27 +98,27 @@ classdef Fish_circle < acq.mconfig
             
             obj.aov = aov;
             obj.center = Z(:);
-
-            % Compute the positions of the fish's body 
+            
+            % Compute the positions of the fish's body
             if isa(Omega, 'shape.Banana') % special treatment for the banana-shaped fish
                 obj.radius = 0; % The rotation of the babana fish is special. In this case the radius doesn't make
-                                % sense.
+                % sense.
             else
                 obj.radius = Rs;
             end
             
             [obj.fpos, obj.angl] = acq.src_rcv_circle(1, Ns, obj.radius, Z, aov, 2*pi);
-
+            
             % Active receivers
             if isempty(idxRcv)
                 obj.idxRcv = 1:Omega.nbPoints;
             else
                 obj.idxRcv = idxRcv;
             end
-
+            
             % Compute positions of receivers
             src_toto = zeros(2,Ns);
-            obj.Ng = Ns; % number of the group 
+            obj.Ng = Ns; % number of the group
             
             for s=1:Ns
                 theta = obj.angl(s);
@@ -135,9 +135,9 @@ classdef Fish_circle < acq.mconfig
                 obj.src_prv{s} = obj.fpos(:,s) + rot*obj.eorgan0; % the position of s-th electric organ
             end
         end
-
+        
         function val = all_dipole(obj)
-        % Export all dipoles
+            % Export all dipoles
             val = [];
             for g=1:obj.Ng
                 val = [val obj.dipole_prv{g}];
@@ -145,17 +145,17 @@ classdef Fish_circle < acq.mconfig
         end
         
         function val = dipole(obj, n)
-        % n-th dipole direction
-            if n>obj.Ns_total || n<1 
+            % n-th dipole direction
+            if n>obj.Ns_total || n<1
                 error('Source index out of range');
             end
             val = obj.dipole_prv{n};
         end
         
         function val = Bodies(obj, n)
-        % Return a C2boundary object containning the fish body at the
-        % n-th position. For a position of sources, we rotate and
-        % translate the body of the fish.
+            % Return a C2boundary object containning the fish body at the
+            % n-th position. For a position of sources, we rotate and
+            % translate the body of the fish.
             if n>obj.Ns_total || n<1
                 error('Source index out of range.');
             end
@@ -163,16 +163,16 @@ classdef Fish_circle < acq.mconfig
         end
         
         function plot(obj, idx, varargin)
-
+            
             if nargin<2 || isempty(idx)
                 idx = 1:obj.Ns_total;
             end
-
+            
             for n=1:length(idx)
                 s = idx(n);
                 rcv = obj.rcv(s);
                 plot(rcv(1,:), rcv(2,:), '.', varargin{:}); hold on;
-                Omega = obj.Bodies(s); plot(Omega); 
+                Omega = obj.Bodies(s); plot(Omega);
                 
                 src = obj.src(s);
                 dp = obj.dipole(s)*Omega.diameter*0.25;

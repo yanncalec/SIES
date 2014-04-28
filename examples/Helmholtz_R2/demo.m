@@ -14,8 +14,8 @@ addpath('~/SIES/');
 %%
 % Initialize an object of |C2boundary|
 
-B = shape.Ellipse(1,1/2,2^9);
-% B = shape.Flower(1/2, 1/2, 2^10);
+% B = shape.Ellipse(1,1/2,2^9);
+B = shape.Flower(1/2, 1/2, 2^10);
 % B = shape.Triangle(1/2, pi*0.8, 2^10);
 % B = shape.Rectangle(1, 1/2, 2^10);
 % B = shape.Banana(5/2, 1, [0,10]', 0, 0, 2^10);
@@ -44,12 +44,11 @@ cfg = acq.Planewave([0,0]', 2.5, N0, N0, [1, 2*pi, 2*pi]);
 
 %%
 % Initialize an |Helmholtz_R2| object 
-freq = pi; % Working frequency of sources
 P = PDE.Helmholtz_R2(D, pmtt, pmeb, pmtt_bg, pmeb_bg, cfg); 
 figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
-freq = pi;
+freq = 2*pi;
 tic
 data = P.data_simulation(freq);
 toc
@@ -72,6 +71,19 @@ ord = floor((N0-1)/2);
 WD = asymp.SCT.theoretical_SCT(D, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 WB = asymp.SCT.theoretical_SCT(B, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 
+%%
+% Far field pattern
+FP = dico.SCT.farfieldpattern(WB, 512);
+fig=figure;
+imagesc(abs(FP)); axis image;
+saveas(fig, '~/farfieldpattern.eps','psc2');
+
+mask = tools.bandiag_mask(512,100);
+fig=figure;
+imagesc(abs(FP).*mask); axis image;
+saveas(fig, '~/farfieldpattern_limview.eps','psc2');
+
+cc
 %% Reconstruct SCT and show error
 
 %%

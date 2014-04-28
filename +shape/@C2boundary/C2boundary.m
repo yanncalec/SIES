@@ -115,6 +115,10 @@ classdef C2boundary
         
         function obj = lt(obj, phi)
         % Redefine the < operator as the rotation of the boundary
+            if ~isa(phi, 'double') || length(phi) ~= 1
+                error('Type error: only double scalar can be used for rotation.');
+            end
+            
             rot = [[cos(phi), -sin(phi)]; [sin(phi), cos(phi)]]; % Rotation matrix
             
             obj.points = rot * obj.points;
@@ -179,7 +183,6 @@ classdef C2boundary
         % Outputs:
         % Sx, Sy: mesh coordinates of boundary points
         % mask: binary mask
-            dh = width/(N-1); 
             mask = ones(N,N);
 
             sx = linspace(z0(1)-width/2, z0(1)+width/2, N);
