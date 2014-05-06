@@ -4,6 +4,10 @@ function plot_field(obj, s, F, F_bg, SX, SY, nbLine, varargin)
     % F_bg = tools.truncate_inf(F_bg);
 
     src = obj.cfg.src(s);
+
+    % psrc = obj.cfg.neutSrc(s); dp = psrc(:,2)-psrc(:,1); dp = dp/norm(dp)*10;
+    % quiver(src(1), src(2), dp(1), dp(2));
+    
     % Field could be complex, plot the real part
 
     figure; 

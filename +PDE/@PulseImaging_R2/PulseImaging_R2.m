@@ -177,13 +177,22 @@ classdef PulseImaging_R2 < PDE.Small_Inclusions
         A = make_matrix_A(Xs, Z, order)
         out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
 
-        function [waveform, dt] = make_pulse(Ntime)
-            Tmax = 0.1;
-            x = linspace(-Tmax/2,Tmax/2,Ntime);
-            sgm = Tmax^2;
-            y = [0 exp(-x.^2/(2*sgm^2))/(sqrt(2*pi)*sgm)];
-            dt = Tmax/Ntime;
-            waveform = diff(y)/dt;
+        function [waveform, dt] = make_pulse(Tmax, Ntime)
+        % Make pulse waveform
+          
+            x= sym('x');
+            f=exp(-x^2*2); g=simplify(diff(f,5));
+            h = inline(g);
+            waveform = h(linspace(-Tmax,Tmax,Ntime));
+            dt = 2*Tmax/Ntime;
+
+            % Method 2: first order derivative of a Gaussian
+            % Tmax = 0.1;
+            % x = linspace(-Tmax/2,Tmax/2,Ntime);
+            % sgm = Tmax^2;
+            % y = [0 exp(-x.^2/(2*sgm^2))/(sqrt(2*pi)*sgm)];
+            % dt = Tmax/Ntime;
+            % waveform = diff(y)/dt;
 
             %             Tmax = 0.1; %[0, Tmax]
             %             hfunc_inline = inline('exp(-(x-m1).^2/2/s1^2)-exp(-(x-m2).^2/2/s2^2)');
