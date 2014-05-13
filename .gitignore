@@ -1,10 +1,23 @@
 # Ignore all
 *
-
+  
 # except
+!.gitignore
 !*.m
 !*.c
 !*.tex
+
+!+PDE
+!+acq      
+!+asymp
+!+dico
+!+ops
+!+shape
+!+tools    
+!+tracking
+!+wavelet  
+!examples
+
 
 # *.mexglx
 # *.mexa64
