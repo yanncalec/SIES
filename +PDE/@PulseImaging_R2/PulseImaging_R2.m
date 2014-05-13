@@ -1,4 +1,4 @@
-classdef PulseImaging_R2 < PDE.Small_Inclusions
+classdef PulseImaging_R2 < PDE.Conductivity_R2
 % Class for the pulse imaging problem in the free space
 
     properties(Access=protected)
@@ -11,22 +11,25 @@ classdef PulseImaging_R2 < PDE.Small_Inclusions
         %
         % In the matrix A only the diagonal terms depend on the time step dt (via lambda I), the
         % other time-independent coefficients are stored in KsdS.
-        KsdS=[] % system block matrix
-        dGdn=[] % the normal derivative of the Green's function
+        % We reuse the variables KsdS and dGdn defined in the class |Conductivity_R2|
+        
+        %         KsdS=[] % system block matrix
+        %         dGdn=[] % the normal derivative of the Green's function
 
         waveform0 % pulse waveform
     end
     
     properties(SetAccess=protected)
-        cnd % conductivity constant corresponding to each inclusion, an array
-        pmtt % permittivity constant corresponding to each inclusion, an array
-
         Ntime % length of waveform
         time % time interval on which the waveform is defined, time = [0,1,...Ntime]*dt
         dt % time step        
     end
     
+    
+    %%% Recharge of some methods already defined in |Conductivity_R2| %%%
+
     methods(Access=protected) % Auxiliary functions
+
         function val = compute_dGdn(obj, sidx)
         % Construct the right hand vector of the given source.
         % If the source is not given, compute for all sources
@@ -115,14 +118,14 @@ classdef PulseImaging_R2 < PDE.Small_Inclusions
     
     methods
         function obj = PulseImaging_R2(D, cnd, pmtt, waveform, dt, cfg)
-            obj = obj@PDE.Small_Inclusions(D, cfg);
+            obj = obj@PDE.Conductivity_R2(D, cnd, pmtt, cfg);
 
             if ~isa(cfg, 'acq.Concentric')
-                error('Configuration of acquisition system must be object of the class acq.Concentric!');
+                error('The configuration of the acquisition system must be object of the class acq.Concentric!');
             end
             
             if  cfg.nbDirac == 1
-                error('Source must fulfill the neutrality condition!');
+                error('The source must fulfill the neutrality condition!');
             end
             
             if length(cnd)<obj.nbIncls || length(pmtt)<obj.nbIncls
@@ -135,13 +138,16 @@ classdef PulseImaging_R2 < PDE.Small_Inclusions
                 end
             end
             
-            obj.cnd = cnd; obj.pmtt = pmtt;
+            % obj.cnd = cnd; obj.pmtt = pmtt;
             
             obj.waveform0 = reshape(waveform,1,[]);
             
             obj.dt = dt;
             
-            obj.KsdS = asymp.CGPT.make_block_matrix(obj.D); 
+            % KsdS has already been computed in Conductivity_R2
+            % obj.KsdS = asymp.CGPT.make_block_matrix(obj.D); 
+            % But dGdn need to be recomputed with the newly defined
+            % compute_dGdn
             obj.dGdn = obj.compute_dGdn();
         end
 
@@ -164,63 +170,68 @@ classdef PulseImaging_R2 < PDE.Small_Inclusions
         out = data_simulation(obj, Tmax)
 
         % Calculate and plot the potential fields 
-        [F, F_bg, Sx, Sy, mask] = calculate_field(obj, freq, s, z0, width, N)        
-        plot_field(obj, s, F, F_bg, Sx, Sy, nbLine, varargin)
-        
-        % Reconstruction of contracted GPT matrix
-        out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode) 
-        out = reconstruct_CGPT_analytic(obj, MSR, ord)
-        
+        [F, F_bg, Sx, Sy, mask] = calculate_field(obj, Ntime, s, z0, width, N)
+        % plot_field(obj, s, F, F_bg, Sx, Sy, nbLine, varargin)        
     end
         
     methods(Static) % Utility functions                            
-        A = make_matrix_A(Xs, Z, order)
-        out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
+        %         A = make_matrix_A(Xs, Z, order)
+        %         out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
 
-        function [waveform, dt] = make_pulse(Tmax, Ntime)
-        % Make pulse waveform
-          
-            x= sym('x');
-            f=exp(-x^2*2); g=simplify(diff(f,5));
-            h = inline(g);
+        function [waveform, dt, wavefunc, wavefunc_hat, fmax] = make_pulse(Tmax, Ntime)
+        % Make gaussian pulse h (derivative of a gaussian) and its Fourier transform H.
+        % Inputs:
+        % Tmax: the pulse is defined on [0, Tmax]
+        % Ntime: number of time steps on [0, Tmax]
+        % Outputs:
+        % waveform: h(t) for discret values of t in [0, Tmax]
+        % dt: 2*Tmax/Ntime
+        % wavefunc: symbolic function of h
+        % wavefunc_hat: symbolic function of H
+        % fmax: frequency bandwidth so that abs(H(fmax))<1e-8
+        
+            x = sym('x');
+            f = exp(-pi*x^2); % for this function f(x) <~ 10^-7 if |x| >~ 2
+            
+            % Fourier transform f^(w) := \int f(t) e^(-2pi*t*w) dt
+            % Fourier transform of exp(-a*x^2): 
+            %
+            % f^(w)=\sqrt(pi/a) * exp(-pi^2*w^2/a)
+            
+            d = 3; % order of the derivative
+            wavefunc = simplify(diff(f, d)); % waveform h
+            
+            h = inline(wavefunc); % translate the symbolic function to a usual function
             waveform = h(linspace(-Tmax,Tmax,Ntime));
             dt = 2*Tmax/Ntime;
+    
+            wavefunc_hat0 = (2*pi*x)^d*exp(-pi*x^2); 
+            wavefunc_hat = 1i^d * wavefunc_hat0; % Fourier transform of h
 
-            % Method 2: first order derivative of a Gaussian
-            % Tmax = 0.1;
-            % x = linspace(-Tmax/2,Tmax/2,Ntime);
-            % sgm = Tmax^2;
-            % y = [0 exp(-x.^2/(2*sgm^2))/(sqrt(2*pi)*sgm)];
-            % dt = Tmax/Ntime;
-            % waveform = diff(y)/dt;
-
-            %             Tmax = 0.1; %[0, Tmax]
-            %             hfunc_inline = inline('exp(-(x-m1).^2/2/s1^2)-exp(-(x-m2).^2/2/s2^2)');
-            %             hfunc = @(Tmax,x)hfunc_inline(Tmax/2-Tmax*0.01,Tmax/2+Tmax*0.01,Tmax*0.1,Tmax*0.1, x);
-            %             waveform = hfunc(Tmax, linspace(0,Tmax,99)); waveform = [0, waveform]*10;
+            epsilon = 1e-8;
+            S = solve(wavefunc_hat0 == epsilon, 'Real', true); % keep only real solution
+            fmax=max(double(S));
         end
         
-        function out = add_white_noise(data, nlvl)
-        % Add white noise to simulated data.
+        
+        function out = add_white_noise_global(data, nlvl)
+        % Add white noise to simulated data. The noise is fixed by its
+        % level (proportional to the data) and is treated globally for
+        % all instants.
+        % Input:
         % nlvl: noise level
             
             out = data;
-            mode = 1; % treat each source independently
-            rowmajor = 1; % procede row-by-row
-            
-            out.sigma = zeros(1, length(data.MSR));
-            
-            for f=1:length(data.MSR) % f can be the index of frequency or time                
-                % add real white noise
-                [totor, sigmar] = tools.add_white_noise(real(out.MSR{f}), nlvl, mode, rowmajor); 
-                
-                % add imaginary white noise
-                [totoi, sigmai] = tools.add_white_noise(imag(out.MSR{f}), nlvl, mode, rowmajor);
-                toto = totor + 1i * totoi; 
+            Nt = length(data.MSR);
 
-                out.sigma(f) = abs(sigmar + 1i * sigmai);
-                out.MSR_noisy{f} = toto;
+            toto = 0;
+            for t=1:Nt
+                toto = toto + norm(data.MSR{t}, 'fro')^2;
             end
+            
+            noise = rand(size(data.MSR{1}));
+            data.MSR_noisy{t} = data.MSR{t} + noise * sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
+            data.sigma = sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
         end
     end
 end

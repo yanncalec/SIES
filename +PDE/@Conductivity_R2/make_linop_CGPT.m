@@ -4,7 +4,6 @@ function out = make_linop_CGPT(cfg, ord, symmode)
 % cfg: configuration of acquisition system
 % ord: maximum order of CGPT to be reconstructed
 % symmode: true to turn on the symmetry constraint of CGPT matrix
-    import tools.linsys.*
     
     if nargin < 3
         symmode = 0;
@@ -13,7 +12,8 @@ function out = make_linop_CGPT(cfg, ord, symmode)
     % The matrix related to sources:
     src = cfg.all_src;
     
-    As = make_matrix_A(src, cfg.center, ord);
+    As = PDE.Conductivity_R2.make_matrix_A(src, cfg.center, ord);
+    
     % The matrix related to receivers
     if cfg.Ng == 1
         % If there is only one group, the receiver does not depend on the source and we use a simplified model
@@ -21,22 +21,22 @@ function out = make_linop_CGPT(cfg, ord, symmode)
         if isa(cfg, 'acq.Coincided')
             Ar = As;
         else
-            Ar = Conductivity_R2.make_matrix_A(cfg.all_rcv, cfg.center, ord);
+            Ar = PDE.Conductivity_R2.make_matrix_A(cfg.all_rcv, cfg.center, ord);
         end
         
         if symmode
-            L = @(x,tflag)SXR_op_sym(x,As,Ar,tflag); % linear operator with constraint of symmetry
+            L = @(x,tflag)tools.linsys.SXR_op_sym(x,As,Ar,tflag); % linear operator with constraint of symmetry
         else
-            L = @(x,tflag)SXR_op(x,As,Ar,tflag); % linear operator
+            L = @(x,tflag)tools.linsys.SXR_op(x,As,Ar,tflag); % linear operator
         end
     else
         for n=1:cfg.Ns_total
-            Ar{n} = Conductivity_R2.make_matrix_A(cfg.rcv(n), cfg.center, ord);
+            Ar{n} = PDE.Conductivity_R2.make_matrix_A(cfg.rcv(n), cfg.center, ord);
         end
         if symmode
-            L = @(x,tflag)SXR_op_list_sym(x,As,Ar,tflag); % linear operator with constraint of symmetry
+            L = @(x,tflag)tools.linsys.SXR_op_list_sym(x,As,Ar,tflag); % linear operator with constraint of symmetry
         else
-            L = @(x,tflag)SXR_op_list(x,As,Ar,tflag); % linear operator
+            L = @(x,tflag)tools.linsys.SXR_op_list(x,As,Ar,tflag); % linear operator
         end
     end
 

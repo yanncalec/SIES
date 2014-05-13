@@ -25,10 +25,17 @@ if ~iscell(D)
     D = {D};
 end
 
+epsilon = 1e-8; % precision threshold for handling the case lambda = 1/2
 nbPoints = D{1}.nbPoints; % all C2boundary objects must have the same value of nbPoints
 
 nbIncls = length(D);
-Amat = asymp.CGPT.make_system_matrix(D, lambda);
+Amat0 = asymp.CGPT.make_system_matrix(D, lambda); 
+
+if min(abs(lambda - 1/2)) < epsilon % if close to 1/2, add an extra condition of L^2_0 function
+    Amat = [Amat0; kron(eye(nbIncls), ones(1, size(Amat0,2)/nbIncls))];
+else
+    Amat = Amat0;    
+end
 
 CC = zeros(ord);
 CS = zeros(ord);
@@ -44,9 +51,15 @@ for m=1:ord
         B(:,i) = toto(:);
     end
 
-    toto = Amat\real(B(:));
+    if min(abs(lambda - 1/2)) < epsilon
+        b = [B(:); zeros(nbIncls, 1)];
+    else
+        b = B(:);
+    end
+    
+    toto = Amat\real(b);
     realphim = reshape(toto, nbPoints, nbIncls);
-    toto = Amat\imag(B(:));
+    toto = Amat\imag(b);
     imagphim = reshape(toto, nbPoints, nbIncls);
     
     for n=1:ord

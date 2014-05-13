@@ -86,3 +86,6 @@ for f=1:length(freqlist)
     norm(M{f} - out{f}.CGPT, 'fro')
 end
 
+%%
+% The matrix of CGPTs M is symmetric:
+M{2}-M{2}.'

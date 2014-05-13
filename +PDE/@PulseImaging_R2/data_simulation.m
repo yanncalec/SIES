@@ -1,9 +1,10 @@
 function out = data_simulation(obj, Ntime)
-% Simulation of the MSR matrix:
-% MSR(s,r) = u-Hs(xr) = sum_l S_{D_l}[phi_l^s](x_r)
+% Simulation of the time-dependent MSR matrix:
+% MSR(s,r) = (u-U)(xr) = sum_l S_{D_l}[phi_l^s](x_r)
 %
 % Inputs:
-% Ntime: end time index
+% Ntime: end time index (if not given then simulate for the whole time
+% duration of the pulse signal)
 %
 % Output:
 % out.MSR: a list of MSR matrix stream. The coefficient at the s-th

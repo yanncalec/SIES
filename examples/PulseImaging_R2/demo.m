@@ -21,15 +21,15 @@ B = shape.Flower(delta/2, delta/2, nbPoints, 5, 0.4, 0);
 % D{1}=(B<(0.3*pi))*0.2+0.2*[1,1]'; % rotation, scaling and translation to get the first inclusion
 D{1}=(B<(0.3*pi))*0.4; % rotation, scaling and translation to get the first inclusion
 
-cnd = [3]; % conductivity values of two inclusions
-pmtt = [0.5]; % permittivity values
+% cnd = [3]; % conductivity values of two inclusions
+% pmtt = [0.5]; % permittivity values
 
 % One can also add multiple inclusions
-% B = shape.Ellipse(delta,delta/2,nbPoints);
-% D{2}=(B<(0.3*pi))*0.2+0.2*[-1,-1]'; % second inclusion
+B = shape.Ellipse(delta,delta/2,nbPoints);
+D{2}=(B<(0.3*pi))*0.2+2*[-1,-1]'; % second inclusion
 
-% cnd = [10, 5]; % conductivity values of two inclusions
-% pmtt = [1, 2]; % permittivity values
+cnd = [10, 5]; % conductivity values of two inclusions
+pmtt = [1, 2]; % permittivity values
 
 %% Set up an environment for experience
 % The sources/receptors are distributed on a circle whose center is closed
@@ -38,8 +38,13 @@ pmtt = [0.5]; % permittivity values
 cfg = acq.Coincided([0,0]', 1, 10, [1, 2*pi, 2*pi], 0, [1,-1]);
 
 Ntime = 1000; % time interval length
-[waveform,dt] = PDE.PulseImaging_R2.make_pulse(3,Ntime);
-figure; plot(waveform);
+[waveform,dt, hfunc, Hfunc, wmax] = PDE.PulseImaging_R2.make_pulse(2,Ntime);
+
+figure; plot(waveform); title('Pulse h');
+% figure; plot(abs(fftshift(fft(waveform)))); 
+
+% M0 = asymp.CGPT.theoretical_CGPT(D, [2,2], 4);
+% M1 = asymp.CGPT.theoretical_CGPT(D, [1/2,1/2], 4);
 
 %%
 % Initialize an environment by passing the fish, the inclusions, the
@@ -56,6 +61,36 @@ tic
 data = P.data_simulation(Ntime);
 toc
 
+%% Reconstruction of time-dependent CGPT
+%%
+% add white noise
+nlvl = 0.1; 
+data = P.add_white_noise(data, nlvl);
+
+%%
+% maximum order of the reconstruction
+ord = 2;
+symmode = 1;
+
+% %%
+% % Compute first the theoretical value of CGPT
+% for f=1:length(freqlist)
+%     lambda = asymp.CGPT.lambda(cnd, pmtt, freqlist(f));
+%     M{f} = asymp.CGPT.theoretical_CGPT(D, lambda, ord);
+% end
+% 
+%%
+% Reconstruct CGPT and show error
+out = {};
+for t=1:Ntime
+    MSR = data.MSR{t};
+    out{t} = P.reconstruct_CGPT(MSR, ord, 100000, 1e-10, symmode);
+    % out{t} = P.reconstruct_CGPT_analytic(MSR, ord);
+
+    %     % out{f}.res/norm(MSR,'fro')
+    %     norm(M{f} - out{f}.CGPT, 'fro')
+end
+cc
 %% Plot the potential fields and make a movie
 %%
 % Calculate the field and plot it. 
@@ -95,3 +130,4 @@ for t=1:Ntime
     writeVideo(vidObj, img);
 end
 close(vidObj);
+

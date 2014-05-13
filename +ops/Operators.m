@@ -142,17 +142,3 @@ classdef Operators < handle
         
     end    
 end
-
-
-% % Old version of documentation
-% Let Px-Py means taking the Px basis for $\psi_n$ and Py basis for
-% $\phi_m$, then one has the following approximation for $\langle A\psi_n,
-% \phi_m \rangle$: 
-% \begin{itemize} 
-% \item P0-P0: $\sigma_2(t_m) K_{mn} = (\Sigma_2 K)_{mn}$ 
-% \item P0-P1: $\sum_j \phi_m(y(t_j)) \sigma_2(t_j) K_{jn} =(\Phi^\top\Sigma_2 K)_{mn}$
-% \item P1-P0: $\sigma_2(t_m) \sum_i K_{mi}\psi_n(x(t_i)) = (\Sigma_2 K\Psi)_{mn}$ 
-% \item P1-P1: $\sum_j\phi_m(y(t_j))\sigma_2(t_j)\sum_i K_{ji} \psi_n(x(t_i)) = (\Phi^\top\Sigma_2 K\Psi)_{mn}$ 
-% \end{itemize} 
-% Here $\Sigma_2=\mbox{diag}(\sigma_2(t_1)\ldots)$, $\Phi=[\phi_1, \ldots
-% \phi_M]$, and $\Psi=[\psi_1,\ldots \psi_N]$. </latex>
