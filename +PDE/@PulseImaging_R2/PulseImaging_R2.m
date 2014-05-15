@@ -178,39 +178,78 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
         %         A = make_matrix_A(Xs, Z, order)
         %         out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
 
-        function [waveform, dt, wavefunc, wavefunc_hat, fmax] = make_pulse(Tmax, Ntime)
-        % Make gaussian pulse h (derivative of a gaussian) and its Fourier transform H.
-        % Inputs:
-        % Tmax: the pulse is defined on [0, Tmax]
-        % Ntime: number of time steps on [0, Tmax]
-        % Outputs:
-        % waveform: h(t) for discret values of t in [0, Tmax]
-        % dt: 2*Tmax/Ntime
-        % wavefunc: symbolic function of h
-        % wavefunc_hat: symbolic function of H
-        % fmax: frequency bandwidth so that abs(H(fmax))<1e-8
-        
+        function [waveform, dt, freqform, df] = make_pulse(Tmax, Ntime)
+            % Make gaussian pulse h (derivative of a gaussian) and its Fourier transform H.
+            % Convenction for Fourier transform:
+            %       f^(w) := \int f(t) e^(-2pi*t*w) dt.
+            %
+            % Inputs:
+            % Tmax: the pulse is defined on [0, Tmax]
+            % Ntime: number of time steps on [0, Tmax]
+            %
+            % Outputs:
+            % waveform: h(t) for discret values of t in [0, Tmax]
+            % dt: Tmax/Ntime
+            % freqform: H(w) for discret values of w in [0, Fmax], Fmax is the frequency bandwidth so that abs(H(Fmax))<1e-8
+            % df: frequency step of freqform
+            
+            if nargin < 2
+                Ntime = 2^9;
+            end
+            
+            if nargin < 1
+                Tmax = 5;
+            end
+            
             x = sym('x');
             f = exp(-pi*x^2); % for this function f(x) <~ 10^-7 if |x| >~ 2
             
-            % Fourier transform f^(w) := \int f(t) e^(-2pi*t*w) dt
-            % Fourier transform of exp(-a*x^2): 
-            %
-            % f^(w)=\sqrt(pi/a) * exp(-pi^2*w^2/a)
+            % Fourier transform of exp(-a*x^2) is
+            %   f^(w)=\sqrt(pi/a) * exp(-pi^2*w^2/a)
             
             d = 3; % order of the derivative
             wavefunc = simplify(diff(f, d)); % waveform h
             
-            h = inline(wavefunc); % translate the symbolic function to a usual function
-            waveform = h(linspace(-Tmax,Tmax,Ntime));
-            dt = 2*Tmax/Ntime;
-    
-            wavefunc_hat0 = (2*pi*x)^d*exp(-pi*x^2); 
-            wavefunc_hat = 1i^d * wavefunc_hat0; % Fourier transform of h
+            T0 = 2.5; % -T0 is the starting time
+            
+            % translate the symbolic function to a usual function
+            h = inline(wavefunc);
+            % h = eval(['@(x)',char(wavefunc)]); % this yields a scalar
+            % function
+            waveform = h(-T0 + (0:Ntime-1)/Ntime * Tmax);            
+            dt = Tmax/Ntime; % time step
 
-            epsilon = 1e-8;
-            S = solve(wavefunc_hat0 == epsilon, 'Real', true); % keep only real solution
-            fmax=max(double(S));
+            % In order to get a high precision approximation, we increase
+            % Tmax (the frequency step is 1/Tmax) and Ntime (which reduces
+            % the time-step Tmax/(Ntime-1)).
+            Tmax0 = Tmax*2^4; Ntime0 = 2^13; % new Tmax and Ntime
+            df = 1/Tmax0; % frequency step
+
+            waveform0 = h(-T0 + (0:Ntime0-1)/Ntime0 * Tmax0);
+            dt0 = Tmax0/Ntime0; % new time-step
+            
+            freqform0 = dt0 * fft(waveform0); % Fourier transform (approximation by FFT)
+
+            % Estimate the essential bandwidth
+            freqfunc = (2*pi*x)^d*exp(-pi*x^2); % Fourier transform of h 
+            % freqfunc = (1i*2*pi*x)^d*exp(-pi*x^2);             
+            S = solve(freqfunc == eps, 'Real', true); % keep only real solution            
+            % We might want to increase Fmax, since 1/2/Fmax will
+            % be the time step for the computation of time-dependent CGPTs.
+            Fmax = max(double(S)); % Half bandwidth of H = h^.            
+            % Number of entries to keep, must be even
+            Nc = ceil(2*Fmax/df/2)*2; % 2*Fmax/df
+            
+            % Keep the low frequency of [0, Fmax]
+            freqform = freqform0(1:Nc/2); % the term Nc/2+1 is real
+            % Keep [-Fmax, Fmax]
+            % freqform = fftshift([freqform0(1:Nc/2), freqform0(end-Nc/2+1: end)]);
+            
+            % freqform is an approximation of the theoretical Fourier
+            % transform. In fact, it will be close (in modulus) to the
+            % following:
+            %             h = inline(freqfunc);
+            %             freqform = h(linspace(0, Fmax, Nc/2+1));                                                
         end
         
         

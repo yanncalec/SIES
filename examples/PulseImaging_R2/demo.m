@@ -21,30 +21,31 @@ B = shape.Flower(delta/2, delta/2, nbPoints, 5, 0.4, 0);
 % D{1}=(B<(0.3*pi))*0.2+0.2*[1,1]'; % rotation, scaling and translation to get the first inclusion
 D{1}=(B<(0.3*pi))*0.4; % rotation, scaling and translation to get the first inclusion
 
-% cnd = [3]; % conductivity values of two inclusions
-% pmtt = [0.5]; % permittivity values
+cnd = [3]; % conductivity values of two inclusions
+pmtt = [0.5]; % permittivity values
 
 % One can also add multiple inclusions
-B = shape.Ellipse(delta,delta/2,nbPoints);
-D{2}=(B<(0.3*pi))*0.2+2*[-1,-1]'; % second inclusion
+% B = shape.Ellipse(delta,delta/2,nbPoints);
+% D{2}=(B<(0.3*pi))*0.2+2*[-1,-1]'; % second inclusion
 
-cnd = [10, 5]; % conductivity values of two inclusions
-pmtt = [1, 2]; % permittivity values
+% cnd = [10, 5]; % conductivity values of two inclusions
+% pmtt = [1, 2]; % permittivity values
 
 %% Set up an environment for experience
 % The sources/receptors are distributed on a circle whose center is closed
 % to the mass of center of the inclusion, up to a small offset.
 
-cfg = acq.Coincided([0,0]', 1, 10, [1, 2*pi, 2*pi], 0, [1,-1]);
+cfg = acq.Coincided([0,0]', 1, 20, [1, 2*pi, 2*pi], 0, [1,-1]);
 
-Ntime = 1000; % time interval length
-[waveform,dt, hfunc, Hfunc, wmax] = PDE.PulseImaging_R2.make_pulse(2,Ntime);
+%% Show the pulse waveform h and its Fourier transfom H
+Tmax = 5; Ntime = 2^10; % time interval length
+% [waveform, dt, hfunc, freqform, df, Hfunc] = PDE.PulseImaging_R2.make_pulse(2,Ntime);
+[waveform, dt, freqform, df] = PDE.PulseImaging_R2.make_pulse(Tmax, Ntime);
+figure; plot(linspace(0, Tmax, Ntime), waveform); title('h'); xlabel('time');
 
-figure; plot(waveform); title('Pulse h');
-% figure; plot(abs(fftshift(fft(waveform)))); 
-
-% M0 = asymp.CGPT.theoretical_CGPT(D, [2,2], 4);
-% M1 = asymp.CGPT.theoretical_CGPT(D, [1/2,1/2], 4);
+Nfreq = length(freqform);
+Fmax = (Nfreq-1) * df;
+figure; plot(linspace(0, Fmax, Nfreq), abs(freqform)); title('H'); xlabel('frequency');
 
 %%
 % Initialize an environment by passing the fish, the inclusions, the
@@ -69,27 +70,43 @@ data = P.add_white_noise(data, nlvl);
 
 %%
 % maximum order of the reconstruction
-ord = 2;
+ord = 1;
 symmode = 1;
 
-% %%
-% % Compute first the theoretical value of CGPT
-% for f=1:length(freqlist)
-%     lambda = asymp.CGPT.lambda(cnd, pmtt, freqlist(f));
-%     M{f} = asymp.CGPT.theoretical_CGPT(D, lambda, ord);
-% end
-% 
+%%
+% Compute theoretical values of time-dependent CGPTs
+[CGPTt, dt0] = asymp.CGPT.theoretical_CGPT_time(D, cnd, pmtt, ord, freqform, df);
+
+CGPTt0 = asymp.CGPT.CGPT_time_truncation(CGPTt, dt0, Tmax);
+
+Ntime0 = size(CGPTt0,3);
+nrm0 = zeros(1,Ntime0);
+
+for t=1:Ntime0
+    %    nrm0(t) = norm(CGPTt0(:,:,t), 'fro');
+    nrm0(t) = trace(CGPTt0(:,:,t));
+end
+figure; plot(linspace(0, Ntime0*dt0, Ntime0), nrm0); title('Trace of time-dependent CGPT: theoretical value');
+
 %%
 % Reconstruct CGPT and show error
-out = {};
+CGPTr = zeros(ord*2, ord*2, Ntime);
 for t=1:Ntime
     MSR = data.MSR{t};
-    out{t} = P.reconstruct_CGPT(MSR, ord, 100000, 1e-10, symmode);
-    % out{t} = P.reconstruct_CGPT_analytic(MSR, ord);
-
+    % out{t} = P.reconstruct_CGPT(MSR, ord, 100000, 1e-10, symmode);
+    toto = P.reconstruct_CGPT_analytic(MSR, ord);
+    CGPTr(:,:,t) = toto.CGPT;
     %     % out{f}.res/norm(MSR,'fro')
     %     norm(M{f} - out{f}.CGPT, 'fro')
 end
+
+nrm1 = zeros(1,Ntime);
+for t=1:Ntime
+    nrm1(t) = trace(CGPTr(:,:,t));
+    % nrm1(t) = norm(CGPTr(:,:,t), 'fro');
+end
+figure; plot(linspace(0, Ntime*dt, Ntime), nrm1); title('Trace of time-dependent CGPT: reconstruction');
+
 cc
 %% Plot the potential fields and make a movie
 %%
