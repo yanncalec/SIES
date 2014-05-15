@@ -1,33 +1,36 @@
-# Ignore all
-*
+# # Ignore all
+# *
   
-# except
-!.gitignore
-!*.m
-!*.c
-!*.tex
+# # except
+# !.gitignore
+# !*.m
+# !*.c
+# !*.tex
 
-!+PDE
-!+acq      
-!+asymp
-!+dico
-!+ops
-!+shape
-!+tools    
-!+tracking
-!+wavelet  
-!examples
+# !+PDE/
+# !+acq/   
+# !+asymp/
+# !+asymp/
+# !+dico/
+# !+ops/
+# !+shape/
+# !+tools/
+# !+tracking/
+# !+wavelet/  
+# !examples/
 
 
-# *.mexglx
-# *.mexa64
-# *.todo
-# *.bak
-# *.old
-# *.mat
-# *.m~
-# output
-# tmp
-# thirdparty
-# html
-# *.pdf
+*.mexglx
+*.mexa64
+*.todo
+*.bak
+*.old
+*.mat
+*.m~
+*.aux
+*.log
+*.pdf
+output
+tmp
+thirdparty
+html
