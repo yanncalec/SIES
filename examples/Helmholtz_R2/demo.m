@@ -7,7 +7,7 @@
 clear all;
 close all;
 clc;
-addpath('~/SIES/');
+addpath('../../');
 
 %% Definition of small inclusions
 
@@ -48,7 +48,7 @@ P = PDE.Helmholtz_R2(D, pmtt, pmeb, pmtt_bg, pmeb_bg, cfg);
 figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
-freq = pi; % Working frequency of sources
+freq = 2*pi; % Working frequency of sources
 
 tic
 data = P.data_simulation(freq);
@@ -76,15 +76,14 @@ WB = asymp.SCT.theoretical_SCT(B, pmeb, pmtt, pmeb_bg, pmtt_bg, ord, freq);
 % Far field pattern
 FP = dico.SCT.farfieldpattern(WB, 512);
 fig=figure;
-imagesc(abs(FP)); axis image;
-saveas(fig, '~/farfieldpattern.eps','psc2');
+imagesc(abs(FP)); axis image; title('Far filed pattern');
+% saveas(fig, '~/farfieldpattern.eps','psc2');
 
 mask = tools.bandiag_mask(512,100);
 fig=figure;
-imagesc(abs(FP).*mask); axis image;
-saveas(fig, '~/farfieldpattern_limview.eps','psc2');
+imagesc(abs(FP).*mask); axis image; title('Far filed pattern with limited angle of view'); 
+% saveas(fig, '~/farfieldpattern_limview.eps','psc2');
 
-cc
 %% Reconstruct SCT and show error
 
 %%
@@ -102,10 +101,10 @@ out = P.reconstruct_SCT_analytic(MSR, freq, ord);
 
 %%
 % Show error
-disp('Relative reconstruction error:')
+disp('Relative error of reconstructed scattering coefficients:')
 norm(out.SCT-WD,'fro')/norm(WD,'fro')
 
-disp('Relative truncation error:')
+disp('Relative error of data-fitting (least square error):')
 out.res/norm(MSR,'fro')
 
 %% Compute the shape descriptor from SCT
@@ -115,23 +114,23 @@ out.res/norm(MSR,'fro')
 Nv = 256; 
 %%
 % Shape descriptor of the reference shape B
-[S0, G0] = dico.SCT.ShapeDescriptor_SCT(WB, Nv);
+[SB, GB] = dico.SCT.ShapeDescriptor_SCT(WB, Nv);
 
 %%
 % Shape descriptor of the reconstruction
-[S1, G1] = dico.SCT.ShapeDescriptor_SCT(out.SCT, Nv);
+[SR, GR] = dico.SCT.ShapeDescriptor_SCT(out.SCT, Nv);
 
 %%
 % Shape descriptor of the true shape D
-[S2, G2] = dico.SCT.ShapeDescriptor_SCT(WD, Nv);
+[SD, GD] = dico.SCT.ShapeDescriptor_SCT(WD, Nv);
 
 %%
 % Error of SD between the true value and the reconstruction should be small
-disp('Error of the shape descriptor between the reconstructed and the true shape:')
-norm(S1-S2,'fro')/norm(S1,'fro')
+disp('Error of the shape descriptor between the reconstructed and the true one:')
+norm(SR-SD,'fro')/norm(SD,'fro')
 
 %%
 % D and B have the same shape descriptor
-disp('Error of the shape descriptor between the reconstructed and the reference shape (big if scl<>1):')
-norm(S0-S2,'fro')/norm(S0,'fro')
+disp('Error of the shape descriptor between the true and the reference one (big if scl<>1):')
+norm(SD-SB,'fro')/norm(SB,'fro')
 

@@ -4,7 +4,7 @@
 
 %% Add path
 clear all;
-% close all;
+close all;
 clc;
 addpath('../../');
 
@@ -22,11 +22,13 @@ B = shape.Ellipse(1, 1/2, 2^9);
 
 %%
 % Make multiple inclusions
-D{1} = B*0.2 + 3.5*[1,1]';
-D{2} = B*0.2 + 3.5*[-1,-1]';
-cnd = [10, 10]; 
-pmtt = [5, 5];
+% D{1} = B*0.2 + 3.5*[1,1]';
+% D{2} = B*0.2 + 1.5*[-1,-1]';
+% cnd = [10, 10]; 
+% pmtt = [5, 5];
 
+D{1} = B*0.2 + 3.5*[1,1]';
+cnd = 10; pmtt = 5;
 %% Set up an environment for experience
 % The sources/receptors are distributed on a circle whose center is closed
 % to the mass of center of the inclusion, up to a small offset.
@@ -58,7 +60,7 @@ MSR = data.MSR{1};
 % Determines how many significant non zeros singular values, which is also the number of
 % inclusions. We suppose this is done correctly.
 ss = sqrt(diag(SS));
-figure; semilogy(ss);
+figure; semilogy(ss); title('Distribution of singular values');
 
 N0 = 2*length(D); % Number of inclusions
 U = UU(:, 1:N0);  % corresponded singular vectors
@@ -66,7 +68,7 @@ U = UU(:, 1:N0);  % corresponded singular vectors
 %% Localization by projection
 
 Ns = 100; % number of searching points
-b0 = 4; % searching box is [-b0, b0]^2
+b0 = 6; % searching box is [-b0, b0]^2
 sx = linspace(-b0, b0, Ns);
 sy = linspace(b0, -b0, Ns);
 [Sx, Sy] = meshgrid(sx, sy);
@@ -93,5 +95,5 @@ end
 
 %%
 % Show the image
-figure; imagesc(Err); axis image; colorbar();
+figure; imagesc(Err); axis image; colorbar(); title('Localisation');
 

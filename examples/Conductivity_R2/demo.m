@@ -76,6 +76,8 @@ data = P.add_white_noise(data, nlvl);
 
 %%
 % Reconstruct CGPT and show error
+fprintf('Norm of the difference between theoretical and reconstructed CGPT matrix at different frequencies:\n');
+
 out = {};
 for f=1:length(freqlist)
     MSR = data.MSR{f};
@@ -88,4 +90,5 @@ end
 
 %%
 % The matrix of CGPTs M is symmetric:
+fprintf('Difference between theoretical and reconstructed CGPT matrix at the frequency %f:\n', freqlist(2));
 M{2}-M{2}.'

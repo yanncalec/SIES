@@ -105,6 +105,7 @@ toc
 %% 
 % Boundaray integral of P1 elements $\int_{\partial\Omega} \psi(x)ds(x)$
 % and P0 elements $\int_{\partial\Omega} \phi(x)ds(x)$
+fprintf('Verify that the solution of the foward system (functions phi and psi) have zero-mean:');
 norm(Omega.sigma * data.fpsi{1}(:,1)) % fpsi is the value of the function $\psi(x)$
 norm(D{1}.sigma * data.fphi{1}(:,1, 1)) % fphi is the value of the function $\phi(x)$
 
@@ -155,8 +156,14 @@ Cur = data.Current_noisy{fidx}; % Surface current
 % reconstruction is a structure.
 out = P.reconstruct_CGPT(MSR, Cur, ord, 10000, 1e-10, symmode); 
 
+fprintf('\n************ Exp. 1 **************\n');
+fprintf('Theoretical CGPT matrix at the frequency %f:\n', freqlist(fidx));
 CGPT0 = CGPTD{fidx} % theoretical value
+
+fprintf('Reconstructed CGPT matrix at the frequency %f:\n', freqlist(fidx));
 CGPT1 = out.CGPT % reconstruction
+
+fprintf('Relative error\n');
 norm(CGPT1-CGPT0,'fro')/norm(CGPT0,'fro') % relative error
 
 %% Reconstruction of PT from the post-processed SFR (PP_SFR) matrix
@@ -170,8 +177,14 @@ Cur_bg = data.Current_bg; % Surface current
 
 out = P.reconstruct_PT(PP_SFR, Cur_bg, 10000, 1e-10, symmode); 
 
+fprintf('\n************ Exp. 2 **************\n');
+fprintf('Theoretical PT matrix at the frequency %f:\n', freqlist(fidx));
 PT0 = CGPTD{fidx}(1:2,1:2) % theoretical value (first order)
+
+fprintf('Reconstructed PT matrix at the frequency %f:\n', freqlist(fidx));
 PT1 = out.PT % reconstructed value
+
+fprintf('Relative error\n');
 norm(PT1-PT0,'fro')/norm(PT0,'fro')
 
 %% Reconstruction of the imaginary part of PT
@@ -181,13 +194,21 @@ norm(PT1-PT0,'fro')/norm(PT0,'fro')
 % part of the PT.
 
 out = P.reconstruct_PT(imag(PP_SFR), Cur_bg, 10000, 1e-10, symmode);
+
+fprintf('\n************ Exp. 3 **************\n');
+
+fprintf('Theoretical PT matrix (imaginary part only) at the frequency %f:\n', freqlist(fidx));
 PT0_imag = imag(PT0)
+
+fprintf('Reconstructed PT matrix (without background field U, imaginary part only) at the frequency %f:\n', freqlist(fidx));
 PT1_imag = real(out.PT)
+
+fprintf('Relative error\n');
 norm(PT1_imag - PT0_imag, 'fro') / norm(PT0_imag, 'fro')
 
 %% Compare the theoretical dipolar expansion value against the post-processed SFR
-% We compare the measured data woth the theoretical computation using the
-% dipolar expansion. The red color corresponds to the measurements.
+% We compare the measured data with the theoretical computations using the
+% dipolar expansion. The red curve corresponds to the measurements.
 % The error can be important if the size of the target is big or if the
 % center of measurement is not close to the target.
 
@@ -201,6 +222,6 @@ for f=1:length(freqlist)
     PP_SFR = data.PP_SFR_noisy{f};
 
     figure; 
-    subplot(121); plot(real(DiExp(1,:))); hold on; plot(real(PP_SFR(1,:)), 'r');
-    subplot(122); plot(imag(DiExp(1,:))); hold on; plot(imag(PP_SFR(1,:)), 'r');
+    subplot(121); plot(real(DiExp(1,:))); hold on; plot(real(PP_SFR(1,:)), 'r'); title('Real part')
+    subplot(122); plot(imag(DiExp(1,:))); hold on; plot(imag(PP_SFR(1,:)), 'r'); title('Imaginary part');
 end

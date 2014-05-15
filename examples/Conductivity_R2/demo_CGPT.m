@@ -38,18 +38,28 @@ ord = 3; % maximum order
 % Numerical evaluation of CGPT matrix. There is no linear relationships
 % between the GPTs of multiple objects and those of each single object
 
+fprintf('CGPT matrix of multiple inclusions:\n');
 M = asymp.CGPT.theoretical_CGPT(D, lambda, ord) % multiple inclusions
+
+
+fprintf('CGPT matrix of the first inclusion:\n');
 M1 = asymp.CGPT.theoretical_CGPT(D{1}, lambda(1), ord) % single inclusion D1
+
+fprintf('CGPT matrix of the second inclusion:\n');
 M2 = asymp.CGPT.theoretical_CGPT(D{2}, lambda(2), ord) % single inclusion D2
 
 %%
 % Compare the numerical evaluation and the theoretical formula on an
 % ellipse
 
-M1 = asymp.CGPT.theoretical_CGPT(B, lambda(1), ord) % single inclusion by numerical evaluation
-M2 = asymp.CGPT.ellipsetensor(ord, 1, 1/2, cnd(1)) % single inclusion by formula
+fprintf('CGPT matrix of an ellipse computed by numerical integration:\n');
+M_numeric = asymp.CGPT.theoretical_CGPT(B, lambda(1), ord) % single inclusion by numerical evaluation
+
+fprintf('CGPT matrix of an ellipse computed by theoretical formula:\n');
+M_formula = asymp.CGPT.ellipsetensor(ord, 1, 1/2, cnd(1)) % single inclusion by formula
 % M2 = asymp.CGPT.disktensor(ord, delta, cnd(1))
 
-norm(M1-M2,'fro')/norm(M2,'fro') % numerical error error
+fprintf('Relative error:\n');
+norm(M_numeric-M_formula,'fro')/norm(M_formula,'fro') % numerical error error
 
 
