@@ -19,7 +19,7 @@ function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, zp
 % dt: time-step of CGPTt
 
 if nargin < 7
-    zp = 2^13;
+    zp = 2^12;
 end
 
 % Verify the maximum frequency so that |H(w) Mf(w)| <= eps

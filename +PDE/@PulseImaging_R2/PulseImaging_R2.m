@@ -245,7 +245,7 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             % Tmax (the frequency step is 1/Tmax) and Ntime (which reduces
             % the time-step Tmax/(Ntime-1)).
             
-            Ntime0 = 2^12; Tmax0 = dt*Ntime0; % new Tmax and Ntime
+            Ntime0 = 2^13; Tmax0 = dt*Ntime0; % new Tmax and Ntime
             df = 1/Tmax0; % frequency step
             
             waveform0 = h(-T0 + (0:Ntime0-1)*dt); % Similar to a zero-padding
