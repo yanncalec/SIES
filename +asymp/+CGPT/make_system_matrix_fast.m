@@ -1,6 +1,9 @@
 function [Amat, Acell] = make_system_matrix_fast(KsdS, lambda)
 % Construct the matrix A in the system A[phi]=b by reusing the block matrices
 % constructed by the function make_block_matrix.
+% Inputs:
+% KsdS: a cell of block matrix, returned by the function make_block_matrix
+% lambda: contrast constant of each inclusion
 
 nbIncls = size(KsdS,1);
 

@@ -16,6 +16,8 @@ function out = data_simulation(obj, Ntime)
     end
     
     Phi = obj.compute_phi(Ntime); % Compute the function phi for all sources 
+    out.MSR = {};
+    out.Phi = Phi;
     
     for t=1:Ntime
         % Compute the MSR matrix by evaluating the single layer potential

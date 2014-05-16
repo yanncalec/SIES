@@ -10,9 +10,17 @@ function out = make_linop_CGPT(cfg, ord, symmode)
     end
 
     % The matrix related to sources:
-    src = cfg.all_src;
-    
-    As = PDE.Conductivity_R2.make_matrix_A(src, cfg.center, ord);
+    if cfg.nbDirac > 1
+        src = zeros(2, cfg.nbDirac*cfg.Ns_total);
+        
+        for s=1:cfg.Ns_total
+            src(:, ((s-1)*cfg.nbDirac+1) : s*cfg.nbDirac) = cfg.neutSrc(s); % the positions of diracs of this source satisfying the neutrality condition (see acq.Concerntric.m)
+        end
+        As0 = PDE.Conductivity_R2.make_matrix_A(src, cfg.center, ord);
+        As = kron(eye(cfg.Ns_total),reshape(cfg.neutCoeff, 1, [])) * As0;
+    else
+        As = PDE.Conductivity_R2.make_matrix_A(cfg.all_src, cfg.center, ord);
+    end
     
     % The matrix related to receivers
     if cfg.Ng == 1

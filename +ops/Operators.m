@@ -24,7 +24,7 @@ classdef Operators < handle
         Phi_t % adjoint of Phi
         
         Kmat % kernel matrix
-        stiffmat% stiffness matrix representation of the operator
+        stiffmat% stiffness matrix representation of the operator. stiffmat is the same as Kmat under the P0-P0 basis.
     end
     
     methods(Abstract, Static)

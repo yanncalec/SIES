@@ -14,25 +14,43 @@ function out = reconstruct_CGPT_analytic(obj, MSR, ord)
 % The least-square solution is given by:
 % X^+ = inv(Ds)*Cs'*MSR*Cr*inv(Dr) /(Ns*Nr/4)
 
+if ~iscell(MSR) % Convert to a cell, for compability with PulseImaging_R2 class
+    MSR = {MSR};
+end
+
 cfg = obj.cfg;
 if isa(cfg, 'acq.Concentric') && cfg.equispaced==1 % In this case Ns=Ns_total, Nr=Nr_total
-    
-    K = min(ord, min(floor((cfg.Ns-1)/2), floor((cfg.Nr-1)/2))) ; % maximum order of CGPT
+    if cfg.nbDirac == 1     
+        K = min(ord, min(floor((cfg.Ns-1)/2), floor((cfg.Nr-1)/2))) ; % maximum order of CGPT
         
-    [Cs, Ds] = make_matrix_CD(cfg.Ns, cfg.radius_src, K);
-    [Cr, Dr] = make_matrix_CD(cfg.Nr, cfg.radius_rcv, K);
-    out.As = Cs*Ds;
-    out.Ar = Cr*Dr;
-    
-    iDs = diag(1./diag(Ds));
-    iDr = diag(1./diag(Dr));
-    
-    CGPT = 4*iDs*Cs'*MSR*Cr*iDr / cfg.Ns / cfg.Nr;
-    out.res = norm(MSR - (out.As * CGPT * out.Ar'), 'fro');
-    out.CGPT = CGPT;
-    
+        [Cs, Ds] = make_matrix_CD(cfg.Ns, cfg.radius_src, K);
+        [Cr, Dr] = make_matrix_CD(cfg.Nr, cfg.radius_rcv, K);
+        
+        iDs = diag(1./diag(Ds));
+        iDr = diag(1./diag(Dr));
+        
+        for t=1:length(MSR);
+            out.CGPT{t} = 4*iDs*Cs'*MSR{t}*Cr*iDr / cfg.Ns / cfg.Nr;
+            out.res{t} = norm(MSR{t} - (out.As * out.CGPT{t} * out.Ar'), 'fro');
+        end
+        out.As = Cs*Ds; out.Ar = Cr*Dr;
+    else
+        src = zeros(2, cfg.nbDirac*cfg.Ns_total);
+        
+        for s=1:cfg.Ns_total
+            src(:, ((s-1)*cfg.nbDirac+1) : s*cfg.nbDirac) = cfg.neutSrc(s); % the positions of diracs of this source satisfying the neutrality condition (see acq.Concerntric.m)
+        end
+        As0 = PDE.Conductivity_R2.make_matrix_A(src, cfg.center, ord);
+        out.As = kron(eye(cfg.Ns_total),reshape(cfg.neutCoeff, 1, [])) * As0;
+        out.Ar = PDE.Conductivity_R2.make_matrix_A(cfg.all_rcv, cfg.center, ord);
+
+        for t=1:length(MSR);
+            out.CGPT{t} = pinv(out.As) * MSR{t} * pinv(out.Ar');
+            out.res{t} = norm(MSR{t} - (out.As * out.CGPT{t} * out.Ar'), 'fro');
+        end
+    end
 else
-    error('Analytic reconstruction formula can be applied only for equispaced concentric configuration!');        
+    error('Analytic reconstruction formula can be applied only for equispaced concentric configuration!');
 end
 end
 

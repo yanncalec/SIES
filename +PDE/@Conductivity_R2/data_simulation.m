@@ -22,6 +22,7 @@ function out = data_simulation(obj, freq)
             toto = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
             for s=1:obj.cfg.Ns_total
                 rcv = obj.cfg.rcv(s); % receivers corresponding to the s-th source
+
                 toto(s,:) = ops.SingleLayer.eval(obj.D{i}, Phi{i}(:,s), rcv);
             end
             MSR = MSR+toto;

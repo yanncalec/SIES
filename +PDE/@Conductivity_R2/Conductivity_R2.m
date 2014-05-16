@@ -5,6 +5,9 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
 % u-G = O(1/x) as |x|->oo
 % where rho_D = 1 + \sum_n (k_n - 1)indic(D_n), with k_n = cnd_n + 1i * freq * pmtt_n,
 % and x_s is the position of the source, and G(x) = 1/2/pi*ln|x|.
+%
+% This class can only simulate data with the mono-Dirac source. For the multiple-Dirac (dipole source) case, one should modify
+% the function compute_dGdn, see the class |PulseImaging_R2| for more details.
 
     properties(Access=protected)
         % Relative to the linear system A[phi] = b.
