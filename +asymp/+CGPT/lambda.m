@@ -22,6 +22,21 @@ for n=1:length(cnd)
         error('Invalid value of conductivity.');
     end
 end
-    
-toto = cnd + 1i*pmtt*freq;
+
+%%%%%%%%%%%%%%%%%%%%%%%% Important Remark %%%%%%%%%%%%%%%%%%%%%%%
+% The facter 2*pi comes from the Fourier transform's convention:
+%   f^(w) = \int f(x) exp(-2*pi*1i*x*w) dx    (1)
+% If the convention 
+%   f^(w) = \int f(x) exp(-1i*x*w) dx         (2)
+% is used, then there will be no 2*pi factor.
+% This affects notably the class PulseImaging_R2 (though the shape
+% identification with multifreqeuncy data could be affected too). In
+% published papers the convention (2) is used, however in the library 
+% it is the convention (1) which is implemented (to be compatible with the 
+% fft of matlab)
+
+toto = cnd + 2*pi*1i*pmtt*freq; % convention (1)
+% toto = cnd + 1i*pmtt*freq; % convention (2)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 val = (toto+1)./(toto-1)/2;

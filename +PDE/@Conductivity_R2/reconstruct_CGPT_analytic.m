@@ -22,18 +22,19 @@ cfg = obj.cfg;
 if isa(cfg, 'acq.Concentric') && cfg.equispaced==1 % In this case Ns=Ns_total, Nr=Nr_total
     if cfg.nbDirac == 1     
         K = min(ord, min(floor((cfg.Ns-1)/2), floor((cfg.Nr-1)/2))) ; % maximum order of CGPT
+        % K = ord;
         
         [Cs, Ds] = make_matrix_CD(cfg.Ns, cfg.radius_src, K);
         [Cr, Dr] = make_matrix_CD(cfg.Nr, cfg.radius_rcv, K);
         
         iDs = diag(1./diag(Ds));
         iDr = diag(1./diag(Dr));
+        out.As = Cs*Ds; out.Ar = Cr*Dr;
         
         for t=1:length(MSR);
             out.CGPT{t} = 4*iDs*Cs'*MSR{t}*Cr*iDr / cfg.Ns / cfg.Nr;
             out.res{t} = norm(MSR{t} - (out.As * out.CGPT{t} * out.Ar'), 'fro');
         end
-        out.As = Cs*Ds; out.Ar = Cr*Dr;
     else
         src = zeros(2, cfg.nbDirac*cfg.Ns_total);
         

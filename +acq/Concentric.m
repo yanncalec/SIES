@@ -29,7 +29,7 @@ classdef Concentric < acq.mconfig
             % neutCoeff: coefficients of the neutrality condition
 
             if nargin < 8 || length(neutCoeff) <= 1
-                obj.neutCoeff = 0; % No neutrality condition in case of one Dirac source
+                obj.neutCoeff = 1; % No neutrality condition in case of one Dirac source
             else
                 if sum(neutCoeff) ~= 0 || max(abs(neutCoeff)) == 0
                     error('Coefficients of Diracs must be non zero and satisfy the neutrality condition (sum=0)!')

@@ -35,7 +35,7 @@ pmtt = [1]; % permittivity values
 % The sources/receptors are distributed on a circle whose center is closed
 % to the mass of center of the inclusion, up to a small offset.
 
-cfg = acq.Coincided([0,0]', 3, 50, [1, 2*pi, 2*pi], 0, [1,-1]);
+cfg = acq.Coincided([0,0]', 3, 50, [1, 2*pi, 2*pi], false, [1,-1]);
 
 %% Show the pulse waveform h and its Fourier transfom H
 Tmax = 5; Ntime = 2^9; % time interval length

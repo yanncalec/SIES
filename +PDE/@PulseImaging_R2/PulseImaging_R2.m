@@ -82,11 +82,12 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             % [phi_1, phi_2, ...] = A\[b_1, b_2, ...]
             % Inputs:
             % Ntime: end time index of the time interval [0...Ntime]*dt
-            % s: (optional) source index
+            % s: (optional) source indexes. If not given, compute for all
+            % sources.
             %
             % Output:
             % Phi: Phi{t} is a 3D array of dimension (nbPoints X nbIncls X
-            % nbSrc) at the time t.
+            % nbSrc) at the time t. The meanings of these three dimensions are: 1. function values on the boundary, 2.inclusions, 3.sources
             
             nbPoints = obj.D{1}.nbPoints; % all inclusions have the same number of discretization points
             lambda = (obj.pmtt/obj.dt + obj.cnd + 1)./(obj.pmtt/obj.dt + obj.cnd - 1)/2;
@@ -98,13 +99,15 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             if nargin<3 % If the source index is not given, we solve for all sources
                 dGdn = obj.dGdn;
             else
-                dGdn = obj.compute_dGdn(s);
+                dGdn = obj.dGdn(:,:,s);
             end
-            nbSrc = size(dGdn,3);
             
+            nbSrc = size(dGdn,3);
+                       
             Phi{1} = zeros(nbPoints, obj.nbIncls, nbSrc);  % Initialization
             % Cm: the constant alpha_l / (alpha_l + dT)
-            alphal = obj.pmtt ./ (obj.cnd-1); Cm = alphal ./ (alphal + obj.dt);
+            alphal = obj.pmtt ./ (obj.cnd-1); 
+            Cm = alphal ./ (alphal + obj.dt);
             
             for t=2:Ntime
                 % Construct the right hand vector RHS                
@@ -115,17 +118,17 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
                     for j=1:obj.nbIncls
                         if j~=i
                             % dSLdn = ops.dSLdn(obj.D{j}, 'P0', 1, obj.D{i}, 'P0', 1);
-                            V = V - Amat_hlf{i,j} * (squeeze(Phi{t-1}(:,j,:))); % for all possible sources, this is the same as apply ops.dSLdn.fwd()
+                            V = V + Amat_hlf{i,j} * (squeeze(Phi{t-1}(:,j,:))); % for all possible sources, this is the same as apply -1*ops.dSLdn.fwd()
                         end
                     end
                                          
-                    W(:, i, :) = Cm(i) * (Amat_hlf{i,i} * (squeeze(Phi{t-1}(:,i,:))) - V - squeeze(dGdn(:, i, :)) * obj.waveform(t-1));
+                    W(:, i, :) = Cm(i) * (Amat_hlf{i,i} * (squeeze(Phi{t-1}(:,i,:))) + V - squeeze(dGdn(:, i, :)) * obj.waveform(t-1));
                 end
                 
                 RHS = reshape(dGdn*obj.waveform(t) + W, nbPoints*obj.nbIncls, []);
                 
                 % function phi of all sources and inclusions                
-                Phi{t} = reshape(Amat\RHS, nbPoints, obj.nbIncls, []); % the three dimensions are: 1. function values on the boundary, 2.inclusions, 3.sources
+                Phi{t} = reshape(Amat\RHS, nbPoints, obj.nbIncls, []); 
             end
         end
     end
@@ -139,7 +142,7 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             end
             
             if  cfg.nbDirac == 1
-                error('The source must fulfill the neutrality condition!');
+                warning('The source must fulfill the neutrality condition!');
             end
             
             if length(cnd)<obj.nbIncls || length(pmtt)<obj.nbIncls
@@ -202,7 +205,7 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
         
         function [waveform, dt, freqform, df] = make_pulse(Tmax, Ntime)
             % Make gaussian pulse h (derivative of a gaussian) and its Fourier transform H.
-            % Convenction for Fourier transform:
+            % Convention for Fourier transform:
             %       f^(w) := \int f(t) e^(-2pi*t*w) dt.
             %
             % Inputs:
