@@ -25,6 +25,7 @@ classdef C2boundary
               % \int f(x) ds(x) = \int_0^(2pi) f(x(t)) |x'(t)| dt
               % ~ \sum_{n=1..nbPoints} f(points(n)) * sqrt(tvec_norm_square(n)) * 2pi/nbPoints
               % = \sum_{n=1..nbPoints} f(points(n)) * sigma(n)
+        box % a minimal rectangular box [width, height] containing the shape (width: size in x-axis, height: size in y-axis)
     end
     
     methods        
@@ -45,6 +46,13 @@ classdef C2boundary
             else
                 obj.name_str = '';
             end
+        end
+        
+        function val = get.box(obj)
+            dd = obj.points - repmat(obj.center_of_mass, 1, obj.nbPoints);
+            w = max(dd(1,:)) - min(dd(1,:));
+            h = max(dd(2,:)) - min(dd(2,:));
+            val = [w, h];
         end
         
         function val = get.pdirection(obj)
@@ -213,10 +221,11 @@ classdef C2boundary
     
         function obj1 = global_perturbation(obj, epsilon, p, n)
         % Perturb and smooth globally a boundary:
-        % D_epsilon(t) = D(t)(1+epsilon*cos(t)*normal(t))
+        % D_epsilon(t) = D(t)(1+epsilon*cos(p*t)*normal(t))
         %
         % Inputs:
-        % p: periodicity of the pertubation
+        % epsilon: strength of the perturbation
+        % p: periodicity of the perturbation
         % n: strength of the smooth filter, integer
         % Output: a new C2boundary object
 
@@ -236,7 +245,7 @@ classdef C2boundary
                 D = [d1(M+1:2*M); d2(M+1:2*M)];
             end
 
-            [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints);
+            [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints, obj.box);
             obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
             %            obj1 = obj.recreat(D, obj.theta, obj.nbPoints);
         end

@@ -84,9 +84,9 @@ end
 % We show in a bar figure the similarity between dictionary shape descriptors and the one reconstructed from data.
 
 fig1= figure; 
-bar(Err, 'facecolor', 'none'); hold on; 
+bar(Err, 'facecolor', 'none'); 
 set(gca, 'XTickLabel', Dico.names, 'XTick',1:lendico);
-
+hold on; 
 %%
 % Identification result is plotted in green, if the result is wrong, the
 % true shape is marked in red.

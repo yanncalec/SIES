@@ -15,11 +15,15 @@ addpath('../../');
 % Initialize an object of |C2boundary|
 
 % B = shape.Ellipse(1,1/2,2^9);
-B = shape.Flower(1/2, 1/2, 2^10);
+% B = shape.Flower(1/2, 1/2, 2^10);
 % B = shape.Triangle(1/2, pi*0.8, 2^10);
 % B = shape.Rectangle(1, 1/2, 2^10);
 % B = shape.Banana(5/2, 1, [0,10]', 0, 0, 2^10);
-% B = shape.Imgshape('../images/Letters/R.png', 2^10);
+B = shape.Imgshape('~/Data/images/Letters/A.png', 2^10);
+
+%%
+% Perturbation of shape
+% B.global_perturbation(0.01, 25, 20);figure;plot(Bp); axis image
 
 %%
 % Make (multiple) inclusion(s). The inclusion D is obtained by rotating and
@@ -46,7 +50,7 @@ cfg = acq.Planewave([0,0]', 2.5, N0, N0, [1, 2*pi, 2*pi]);
 % Initialize an |Helmholtz_R2| object 
 P = PDE.Helmholtz_R2(D, pmtt, pmeb, pmtt_bg, pmeb_bg, cfg); 
 figure; plot(P, 'LineWidth', 1); axis image;
-
+cc
 %% Simulation of the MSR data
 freq = 2*pi; % Working frequency of sources
 
