@@ -10,14 +10,19 @@ addpath('../../');
 
 %% Definition of the small inclusion
 
-delta = 1 ; % diameter of the standard shape
 %%
 % Make (multiple) inclusions
 
 nbPoints = 2^10; % number of discritization points on the boundary
 
 % Initialize an object of |shape.C2boundary|
-B = shape.Flower(delta/2, delta/2, nbPoints, 5, 0.4, 0);
+% B = shape.Ellipse(1,1/2,nbPoints);
+% B = shape.Triangle(1/2, pi*0.8, 2^10);
+% B = shape.Rectangle(1, 1/2, 2^10);
+B = shape.Imgshape('~/Data/images/Letters/R.png', 2^10);
+
+%%
+% True shapes
 % D{1}=(B<(0.3*pi))*0.2+0.2*[1,1]'; % rotation, scaling and translation to get the first inclusion
 D{1}=(B<(0.3*pi))*0.5; % rotation, scaling and translation to get the first inclusion
 
@@ -120,7 +125,6 @@ end
 figure; plot(linspace(0, Ntime*dt, Ntime), nrm1); title('Trace of time-dependent CGPT: reconstruction');
 figure; plot(linspace(0, Ntime*dt, Ntime), nrm1); hold on;  plot(linspace(0, Ntime0*dt0, Ntime0), nrm0, 'r'); title('Trace of time-dependent CGPT: comparison');
 
-cc
 
 %% Plot the potential fields and make a movie
 %%
@@ -133,6 +137,7 @@ sidx = 1; % source index to be calculated
 %%
 % Make a movie
 
+Img = {};
 vmin=0; vmax=0;
 for t=1:Ntime
     Img{t} = F{t}-F_bg{t}; %perturbation

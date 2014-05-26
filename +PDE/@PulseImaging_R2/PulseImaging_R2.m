@@ -257,7 +257,7 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             % Estimate the essential bandwidth
             freqfunc = (2*pi*x)^d*exp(-pi*x^2); % Fourier transform of h
             % freqfunc = (1i*2*pi*x)^d*exp(-pi*x^2);
-            S = solve(freqfunc == eps, 'Real', true); % keep only real solution
+            S = solve(freqfunc - eps, 'Real', true); % keep only real solution
             % We might want to increase Fmax, since 1/2/Fmax will
             % be the time step for the computation of time-dependent CGPTs.
             Fmax = max(double(S)); % Half bandwidth of H = h^.

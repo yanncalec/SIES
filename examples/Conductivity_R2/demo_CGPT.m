@@ -1,5 +1,7 @@
 %% Demo of the Conductivity_R2 class
-% This script shows how to compute the contracted GPT (CGPT) matrix of multiple inclusions.
+% This script shows how to compute the contracted GPT (CGPT) matrix of
+% inclusion(s). It shows also the stability of the CGPT matrix with respect
+% to the (global or local) perturbation of the shape.
 
 %% Add path
 clear all;
@@ -63,3 +65,34 @@ fprintf('Relative error:\n');
 norm(M_numeric-M_formula,'fro')/norm(M_formula,'fro') % numerical error error
 
 
+%% CGPT of perturbed shapes.
+% CGPT is stable to the global and the local perturbations
+
+lambda = asymp.CGPT.lambda(3);
+B = shape.Imgshape('~/Data/images/Letters/R.png', 2^10);
+figure; plot(B); axis image;
+
+fprintf('CGPT matrix of a letter:\n');
+M0 = asymp.CGPT.theoretical_CGPT(B, lambda, ord)
+
+%%
+% Global perturbation
+Bg = B.global_perturbation(0.01, 10, 50);
+figure; plot(Bg); axis image;
+
+fprintf('CGPT matrix of the globally perturbed shape:\n');
+Mg = asymp.CGPT.theoretical_CGPT(Bg, lambda, ord) 
+
+fprintf('Relative error:\n');
+norm(Mg-M0,'fro')/norm(M0, 'fro')
+
+%%
+% Local perturbation
+Bl = B.local_perturbation(-0.3, 0.35, 0.02, 0.1*pi);
+figure; plot(Bl); axis image;
+
+fprintf('CGPT matrix of the locally perturbed shape:\n');
+Ml = asymp.CGPT.theoretical_CGPT(Bl, lambda, ord) 
+
+fprintf('Relative error:\n');
+norm(Ml-M0,'fro')/norm(M0, 'fro')

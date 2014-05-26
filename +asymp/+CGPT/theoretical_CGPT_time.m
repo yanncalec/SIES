@@ -6,9 +6,8 @@ function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, zp
 % D, cnd, pmtt: inclusions and their conductivity and permittivity
 % constants.
 % ord: order of CGPT matrix
-% H: Fourier transform of the waveform h on [0, Fmax]. Note that h is a
-% real function, hence H(-w) = conj(H(w)).
-% We recall the convention for the Fourier transform:
+% H: Fourier transform of the waveform h on [0, Fmax] with Fmax being the bandwidth of H. Note that the pulse h is a
+% real function, hence H(-w) = conj(H(w)). We recall the convention for the Fourier transform:
 %       H(w) = \int h(t) exp(-2*pi*1i*t*w) dt
 % df: frequency step in H
 % zp: length of zero-padded H, 2^12 by default
@@ -17,6 +16,7 @@ function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, zp
 % CGPTt: time-dependent CGPT matrices on [0, Tmax] for some Tmax determined
 % from H, df, and zp.
 % dt: time-step of CGPTt
+% CGPTf: CGPT matrix in the frequency domain of the band [-Fmax, Fmax] 
 
 if nargin < 7
     zp = 2^12;

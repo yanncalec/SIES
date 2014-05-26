@@ -17,7 +17,7 @@ B = shape.Ellipse(1,1/2,2^9);
 % B = shape.Triangle(1/2, pi*0.8, 2^10);
 % B = shape.Rectangle(1, 1/2, 2^10);
 % B = shape.Banana(5/2, 1, [0,10]', 0, 0, 2^10);
-% B = shape.Imgshape('../images/Letters/R.png', 2^10);
+% B = shape.Imgshape('~/Data/images/Letters/R.png', 2^10);
 
 %%
 % Make (multiple) inclusion(s)
