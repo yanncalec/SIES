@@ -1,9 +1,11 @@
 function out = reconstruct_CGPT_analytic(obj, MSR, ord)
 % Reconstruct the contracted GPT from data using analytical method.
 %
-% When the sources and receivers are equally distributed on a circle, use analytical
-% formula for reconstruction. The whole linear system is:
+% The analytical method of reconstruction is applicable only when the sources and 
+% receivers are both equally distributed on a circle. The whole linear system is:
+%
 % Cs*Ds*CGPT*Dr*Cr' = MSR
+% 
 % with Cs ~ Ns X K (resp. Cr ~ Nr X K) a matrix depending only on
 % source (resp. receivers) angular positions (relative to the center of
 % measurement circle), and Ds (resp. Dr) a diagonal matrix depending only
@@ -12,7 +14,13 @@ function out = reconstruct_CGPT_analytic(obj, MSR, ord)
 % Cs'*Cs = Ns/2 * Id, if K < Ns/2
 % Cr'*Cr = Nr/2 * Id, if K < Nr/2
 % The least-square solution is given by:
+%
 % X^+ = inv(Ds)*Cs'*MSR*Cr*inv(Dr) /(Ns*Nr/4)
+%
+% Inputs:
+% MSR: the MSR data matrix, if it is time-dependent or multifrequency, MSR
+% need to be a cell.
+% ord: maximum order of reconstruction
 
 if ~iscell(MSR) % Convert to a cell, for compability with PulseImaging_R2 class
     MSR = {MSR};
