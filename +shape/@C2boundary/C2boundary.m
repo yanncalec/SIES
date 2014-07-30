@@ -25,7 +25,8 @@ classdef C2boundary
 		% \int f(x) ds(x) = \int_0^(2pi) f(x(t)) |x'(t)| dt
 		% ~ \sum_{n=1..nbPoints} f(points(n)) * sqrt(tvec_norm_square(n)) * 2pi/nbPoints
 		% = \sum_{n=1..nbPoints} f(points(n)) * sigma(n)
-		box % a minimal rectangular box [width, height] containing the shape (width: size in x-axis, height: size in y-axis)
+
+        box % a minimal rectangular box [width, height] containing the shape (width: size in x-axis, height: size in y-axis)
 	end
 	
 	methods
@@ -44,6 +45,12 @@ classdef C2boundary
 			obj.avec = avec;
 			obj.normal = normal;
 			
+            % Check the curve
+            flag = shape.C2boundary.check_sampling(points);
+            if ~flag
+                warning('Singularities found in the curve! Decrease the sampling step!');
+            end
+            
 			if nargin > 4 && ~isempty(com)
 				obj.center_of_mass = com;
 			else
@@ -226,8 +233,39 @@ classdef C2boundary
 			% end
 			% % fill the inside of the mask
 			% mask = imfill(mask, 4, 'holes'); % use matlab's imfill function
-		end
-		
+        end
+
+        function obj1 = smooth(obj, epsilon, pos, width)
+            % Smooth a piece of the boundary by convolution using a constant window of width
+            % proportional to epsilon. The boundary to be smoothed is on [pos-width/2, pos+width/2]
+        
+            epsilon = mod(epsilon, 1);
+            hwidth = ceil(epsilon * obj.nbPoints);
+            
+            if nargin < 3 
+                p1 = tools.convfix(obj.points(1,:), hwidth);
+                p2 = tools.convfix(obj.points(2,:), hwidth);
+            else
+                pos = mod(pos, 1);
+                width = mod(width, 1);
+                idx = floor(pos * obj.nbPoints);
+                Lt = max(1, floor(obj.nbPoints * width)/2);
+
+                q1 = tools.convfix(obj.points(1,idx-Lt:idx+Lt), hwidth);
+                q2 = tools.convfix(obj.points(2,idx-Lt:idx+Lt), hwidth);
+                p1 = [obj.points(1, 1:idx-Lt-1), q1, obj.points(1,idx+Lt+1:end)];
+                p2 = [obj.points(2, 1:idx-Lt-1), q2, obj.points(2,idx+Lt+1:end)];
+            end
+            D = [p1; p2]; 
+            N=length(p1); theta=2*pi*(0:N-1)/N;
+            [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, theta, obj.nbPoints, obj.box);
+            obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
+        end
+        
+		function obj1 = dammage(obj, epsilon, pos, width)
+			% Apply a dammage to the boundary by linking boundary points.
+        end
+        
 		function obj1 = global_perturbation(obj, epsilon, p, n)
 			% Perturb and smooth globally a boundary:
 			% D_epsilon(t) = D(t)(1+epsilon*cos(p*t)*normal(t))
@@ -361,7 +399,49 @@ classdef C2boundary
 			
 			val = [Cx,Cy]' / mass;
 			%C = (Cx+j*Cy) / mass;
-		end
+        end
+        
+        function val = check_sampling(points)
+            % A C^1 parameterized simple curve f(t) (t is the parameter) must satisfy (by Taylor expansion)
+            % <f(t_n+1)-f(t_n), f(t_n)-f(t_n-1)> > 0, for sufficiently
+            % small sampling step dt = t_n - t_n-1.
+            %
+            % This function check this condition.
+            
+            nbPoints = size(points, 2);
+
+            val = 1;
+
+            for p=1:nbPoints
+                x = points(:,p);
+                
+                if p==1
+                    y=points(:,nbPoints);
+                    z=points(:,p+1);
+                elseif p==nbPoints
+                    y=points(:,p-1);
+                    z=points(:,1);
+                else
+                    y=points(:,p-1);
+                    z=points(:,p+1);                    
+                end
+                
+                toto = (z-x)'*(x-y)/(norm(y-x)*norm(z-x));
+                if toto <= 0
+                    val = 0;
+                end
+            end
+        end
+
+        function val = check_C1simplecurve(points)
+            % A C^1 curve is simple means it is a) connected, b) does not cross
+            % itself and c) ends at the starting point. This function check
+            % the condition b).
+            
+           % TODO
+           val = 0;
+        end
+        
 	end
 end
 

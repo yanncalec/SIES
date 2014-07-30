@@ -17,9 +17,11 @@ nbPoints = 2^10; % number of discritization points on the boundary
 
 % Initialize an object of |shape.C2boundary|
 % B = shape.Ellipse(1,1/2,nbPoints);
-% B = shape.Triangle(1/2, pi*0.8, 2^10);
-% B = shape.Rectangle(1, 1/2, 2^10);
-B = shape.Imgshape('~/Data/images/Letters/R.png', 2^10);
+% B = shape.Triangle(1/2, pi*0.8, nbPoints);
+% B = shape.Rectangle(1, 1/2, nbPoints);
+B = shape.Flower(1/2,1/2,nbPoints); % flower
+% B = shape.Imgshape('~/Data/images/Letters/A.png', nbPoints);
+% figure; plot(B);
 
 %%
 % True shapes
@@ -96,7 +98,8 @@ for t=1:Ntime0
     %    nrm0(t) = norm(CGPTt0(:,:,t), 'fro');
     nrm0(t) = trace(CGPTt0(:,:,t));
 end
-figure; plot(linspace(0, Ntime0*dt0, Ntime0), nrm0); title('Trace of time-dependent CGPT: theoretical value');
+figure; plot(linspace(0, Ntime0*dt0, Ntime0), nrm0); 
+title('Trace of time-dependent CGPT: theoretical value');
 
 % M=asymp.CGPT.theoretical_CGPT(D, asymp.CGPT.lambda(cnd, pmtt, df*100), ord);
 % waveform0=squeeze(CGPTt0(1,1,:))/M(1,1);
@@ -122,8 +125,14 @@ for t=1:Ntime
     nrm1(t) = trace(CGPTr(:,:,t));
     % nrm1(t) = norm(CGPTr(:,:,t), 'fro');
 end
-figure; plot(linspace(0, Ntime*dt, Ntime), nrm1); title('Trace of time-dependent CGPT: reconstruction');
-figure; plot(linspace(0, Ntime*dt, Ntime), nrm1); hold on;  plot(linspace(0, Ntime0*dt0, Ntime0), nrm0, 'r'); title('Trace of time-dependent CGPT: comparison');
+figure; 
+plot(linspace(0, Ntime*dt, Ntime), nrm1);
+title('Trace of time-dependent CGPT: reconstruction');
+
+figure; 
+plot(linspace(0, Ntime*dt, Ntime), nrm1); hold on;  
+plot(linspace(0, Ntime0*dt0, Ntime0), nrm0, 'r'); 
+title('Trace of time-dependent CGPT: comparison');
 
 
 %% Plot the potential fields and make a movie

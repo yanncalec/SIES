@@ -9,7 +9,7 @@ function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, zp
 % H: Fourier transform of the waveform h on [0, Fmax] with Fmax being the bandwidth of H. Note that the pulse h is a
 % real function, hence H(-w) = conj(H(w)). We recall the convention for the Fourier transform:
 %       H(w) = \int h(t) exp(-2*pi*1i*t*w) dt
-% df: frequency step in H
+% df: frequency sampling step for H
 % zp: length of zero-padded H, 2^12 by default
 %
 % Outputs:
@@ -36,7 +36,7 @@ end
 % regularity of the result.
 H = tools.zeropadding(H, zp, 'tail');
 Nfreq = length(H); % Length in the time domain will be Ntime = 2*Nfreq
-dt = 1/(df * Nfreq * 2); % time-step of CGPTt
+dt = 1/(df * Nfreq * 2); % time-step of CGPTt equals to 1/(2*Fmax)
 
 % Compute Nf = H*Mf (*: product)
 [nr, nc] = size(M0);
@@ -67,19 +67,11 @@ end
 
 % Take inverse Fourier transform to get h*M (*: convolution).
 %
-% We compute f(m*dt) for m=0..Nfreq-1 with dt=1/2*Fmax, via FFT:
-% f(m*dt) \simeq df * \sum_{n=-Nfreq/2}^{Nfreq/2-1} F(n*df) *
-% exp(2*pi*1i*df*n*m*df*dt), note that df*dt = 1/(Nfreq-1)
-%            =    2*Fmax * 1/2(Nfreq-1) \sum_{n=0}^{Nfreq-1} F(n*df)
-%            * exp(2*pi*1i*n*m/(Nfreq-1))
-%            =    2*Fmax * ifft(fftshift(F))
-% There is no fftshift after ifft since the index m varies in 0..Nfreq-1
-% (Nt is supported on R_+).
-
 % No fftshift before ifft since CGPTf is alreaday shifted by
 % construction. No fftshift after ifft since the signal is causal.
 
 % ifft along the time axis
-CGPTt = real(ifft(CGPTf, [], 3)) * (2*Nfreq) * df; % Approximation of the true Fourier integral
+CGPTt = real(ifft(CGPTf, [], 3)) * (2*Nfreq) * df; % 2*Nfreq is due to the Matlab FFT convention, and df is due to the approximation of the true Fourier integral
+
 
 

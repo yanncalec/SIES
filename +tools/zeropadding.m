@@ -1,5 +1,5 @@
 function [Xz] = zeropadding(X, Nz, mode)
-% Zero pad a vector X to a length of Nz.
+% Zero pad a vector X to a vector of length Nz.
 
 Nx = length(X);
 

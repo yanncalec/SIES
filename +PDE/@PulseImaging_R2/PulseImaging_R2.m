@@ -51,9 +51,9 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             
             for i=1:obj.nbIncls
                 toto = zeros(length(sidx), nbPoints);
-                for s=1:length(sidx)
-                    psrc = obj.cfg.neutSrc(sidx(s)); % the positions of diracs of this source satisfying the neutrality condition (see acq.Concerntric.m)
-                    toto(s, :) = reshape(obj.cfg.neutCoeff, 1, []) * tools.Laplacian.Green2D_Dn(psrc, obj.D{i}.points, obj.D{i}.normal);
+				for s=1:length(sidx)
+					psrc = obj.cfg.neutSrc(sidx(s)); % the positions of diracs of this source satisfying the neutrality condition (see acq.Concerntric.m)					
+					toto(s, :) = reshape(obj.cfg.neutCoeff, 1, []) * tools.Laplacian.Green2D_Dn(psrc, obj.D{i}.points, obj.D{i}.normal);
                 end
                 val(:, i, :) = toto';
             end
