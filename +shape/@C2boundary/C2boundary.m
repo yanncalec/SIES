@@ -16,7 +16,7 @@ classdef C2boundary
 		
 		%% Quantites which are automatically set
 		
-		theta % non tied-off parameterization between [0, 2pi)
+		theta % non tied-off parameterization between [0, 2pi), we use the left hand convention: as theta increases, the domain is at the left hand of the curve
 		cpoints % complexification of the boundary points: points(1,:)+1i*points(2,:)
 		diameter % (upper bound of) diameter of the shape, calculated from the center of mass
 		tvec_norm % norm of the tangent vector
@@ -27,6 +27,7 @@ classdef C2boundary
 		% = \sum_{n=1..nbPoints} f(points(n)) * sigma(n)
 
         box % a minimal rectangular box [width, height] containing the shape (width: size in x-axis, height: size in y-axis)
+        flag % a validity flag for the curve to be well defined
 	end
 	
 	methods
@@ -47,9 +48,9 @@ classdef C2boundary
 			
             % Check the curve
             flag = shape.C2boundary.check_sampling(points);
-            if ~flag
-                warning('Singularities found in the curve! Decrease the sampling step!');
-            end
+            %             if ~flag
+            %                 warning('Singularities found in the curve! Decrease the sampling step!');
+            %             end
             
 			if nargin > 4 && ~isempty(com)
 				obj.center_of_mass = com;
@@ -184,7 +185,8 @@ classdef C2boundary
 		end
 		
 		function plot(obj,varargin)
-			plot(obj.points(1,:), obj.points(2,:),varargin{:}); hold on;
+			plot(obj.points(1,:), obj.points(2,:),varargin{:}); 
+            % hold on;
 		end
 		
 		function [Sx, Sy, mask] = interior_mesh(obj, width, N)
@@ -235,36 +237,50 @@ classdef C2boundary
 			% mask = imfill(mask, 4, 'holes'); % use matlab's imfill function
         end
 
-        function obj1 = smooth(obj, epsilon, pos, width)
-            % Smooth a piece of the boundary by convolution using a constant window of width
-            % proportional to epsilon. The boundary to be smoothed is on [pos-width/2, pos+width/2]
+        function obj1 = smooth(obj, hwidth, pos, width)
+            % Smooth a segment of the boundary by convolution using a constant window.
+            % Inputs:
+            % hwidth: the length (integer) of the constant convolution window            
+            % pos, width: the boundary to be smoothed is on [pos-width/2,
+            % pos+width/2], and 0<pos<=1 is the normalized curve
+            % parameteration and 0<width<=1 is the normalized width of the
+            % segment of boundary
+            % Output:
+            % obj1: a new object representing the smoothed shape
         
-            epsilon = mod(epsilon, 1);
-            hwidth = ceil(epsilon * obj.nbPoints);
+            hwidth = floor(hwidth);
             
-            if nargin < 3 
-                p1 = tools.convfix(obj.points(1,:), hwidth);
-                p2 = tools.convfix(obj.points(2,:), hwidth);
+            if hwidth>0
+                if nargin < 3
+                    p1 = tools.convfix(obj.points(1,:), hwidth);
+                    p2 = tools.convfix(obj.points(2,:), hwidth);
+                else
+                    pos = mod(pos, 1);
+                    width = mod(width, 1);
+                    idx = max(floor(pos * obj.nbPoints),1);
+                    Lt = max(1, floor(obj.nbPoints * width/2));
+                    
+                    if idx-Lt<=1 || idx+Lt>=obj.nbPoints
+                        error('Index error: increase pos or reduce width to keep width<min(nbPoints-pos,pos).');
+                    end
+                    
+                    q1 = tools.convfix(obj.points(1,idx-Lt:idx+Lt), hwidth);
+                    q2 = tools.convfix(obj.points(2,idx-Lt:idx+Lt), hwidth);
+                    p1 = [obj.points(1, 1:idx-Lt-1), q1, obj.points(1,idx+Lt+1:end)];
+                    p2 = [obj.points(2, 1:idx-Lt-1), q2, obj.points(2,idx+Lt+1:end)];
+                end
+                D = [p1; p2];
+                N=length(p1); theta=2*pi*(0:N-1)/N;
+                [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, theta, obj.nbPoints, obj.box);
+                obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
             else
-                pos = mod(pos, 1);
-                width = mod(width, 1);
-                idx = floor(pos * obj.nbPoints);
-                Lt = max(1, floor(obj.nbPoints * width)/2);
-
-                q1 = tools.convfix(obj.points(1,idx-Lt:idx+Lt), hwidth);
-                q2 = tools.convfix(obj.points(2,idx-Lt:idx+Lt), hwidth);
-                p1 = [obj.points(1, 1:idx-Lt-1), q1, obj.points(1,idx+Lt+1:end)];
-                p2 = [obj.points(2, 1:idx-Lt-1), q2, obj.points(2,idx+Lt+1:end)];
+                obj1 = obj;
             end
-            D = [p1; p2]; 
-            N=length(p1); theta=2*pi*(0:N-1)/N;
-            [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, theta, obj.nbPoints, obj.box);
-            obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
         end
         
-		function obj1 = dammage(obj, epsilon, pos, width)
-			% Apply a dammage to the boundary by linking boundary points.
-        end
+        % 		function obj1 = dammage(obj, epsilon, pos, width)
+        % 			% Apply a dammage to the boundary by linking boundary points.
+        %         end
         
 		function obj1 = global_perturbation(obj, epsilon, p, n)
 			% Perturb and smooth globally a boundary:
@@ -277,25 +293,28 @@ classdef C2boundary
 			%
 			% Output: a new C2boundary object
 			
-			D = obj.points + epsilon*repmat(cos(p*obj.theta),2,1) .* obj.normal;
-			
-			% Smooth the bounary
-			if n>0
-				k = ones(1,n)/n;
-				mode = 'same';
-				
-				M = length(D);
-				d1 = [D(1,:), D(1,:), D(1,:)];
-				d2 = [D(2,:), D(2,:), D(2,:)];
-				
-				d1 = conv(d1, k, mode);
-				d2 = conv(d2, k, mode);
-				D = [d1(M+1:2*M); d2(M+1:2*M)];
-			end
-			
-			[D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints, obj.box);
-			obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
-			%            obj1 = obj.recreat(D, obj.theta, obj.nbPoints);
+            if abs(epsilon) > 0
+                D = obj.points + epsilon*repmat(cos(p*obj.theta),2,1) .* obj.normal;
+                
+                % Smooth the bounary
+                if n>0
+                    k = ones(1,n)/n;
+                    mode = 'same';
+                    
+                    M = length(D);
+                    d1 = [D(1,:), D(1,:), D(1,:)];
+                    d2 = [D(2,:), D(2,:), D(2,:)];
+                    
+                    d1 = conv(d1, k, mode);
+                    d2 = conv(d2, k, mode);
+                    D = [d1(M+1:2*M); d2(M+1:2*M)];
+                end
+                
+                [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints, obj.box);
+                obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
+            else
+                obj1 = obj;
+            end
 		end
 		
 		function obj1 = local_perturbation(obj, epsilon, pos, width, theta)
@@ -313,33 +332,36 @@ classdef C2boundary
 			%
 			% Output: a new C2boundary object
 			
-			if width > 0.5
-				error('Wrong value of width, must be smaller than 0.5!');
-			end
-			
-			pos = mod(pos, 1);
-			width = mod(width, 1);
-			idx = floor(pos * obj.nbPoints);
-			
-			% h = @(t)(exp(-1./(1-t.^2))); % a C^infty function with compact support
-			h = @(t)(exp(-10*t.^2));
-			Lt = max(1, floor(obj.nbPoints * width));
-			toto = [h(linspace(-1,1,Lt)), zeros(1,obj.nbPoints-Lt)];
-			H = circshift(toto, [0, idx-floor(Lt/2)]);
-						
-			if nargin < 5 || isempty(theta)
-				rot = eye(2);
-			else
-				rot = [cos(theta), sin(-theta); sin(theta), cos(theta)];
-			end
-			D = obj.points + epsilon * repmat(H, 2, 1) .* (rot * obj.normal);
-			% figure; plot(D(1,:), D(2,:));
-			
-			[D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints);
-			obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
-		end
-	end
-	
+            if abs(epsilon) > 0
+                if width > 0.5
+                    error('Wrong value of width, must be smaller than 0.5!');
+                end
+                
+                pos = mod(pos, 1);
+                width = mod(width, 1);
+                idx = floor(pos * obj.nbPoints);
+                
+                % h = @(t)(exp(-1./(1-t.^2))); % a C^infty function with compact support
+                h = @(t)(exp(-10*t.^2));
+                Lt = max(1, floor(obj.nbPoints * width));
+                toto = [h(linspace(-1,1,Lt)), zeros(1,obj.nbPoints-Lt)];
+                H = circshift(toto, [0, idx-floor(Lt/2)]);
+                
+                if nargin < 5 || isempty(theta)
+                    rot = eye(2);
+                else
+                    rot = [cos(theta), sin(-theta); sin(theta), cos(theta)];
+                end
+                D = obj.points + epsilon * repmat(H, 2, 1) .* (rot * obj.normal);
+                % figure; plot(D(1,:), D(2,:));
+                
+                [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, obj.theta, obj.nbPoints);
+                obj1 = shape.C2boundary(D1, tvec1, avec1, normal1, [], obj.name_str);
+            else
+                obj1 = obj;
+            end
+        end
+    end
 	methods(Access = protected)
 		function val = get_center_of_mass(obj)
 			val = shape.C2boundary.get_com(obj.points, obj.tvec, obj.normal);

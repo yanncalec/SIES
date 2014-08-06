@@ -1,6 +1,7 @@
 %% Demo of the Conductivity_R2 class
 % This script shows how to use |PDE.Conductivity_R2| class for data simulation
-% and reconstruction of GPTs.
+% and reconstruction of GPTs. The reconstruction of first order GPT (PT) is
+% very stable wrt both the noise level and the angle of view.
 
 %% Add path
 clear all;
@@ -21,8 +22,9 @@ B = shape.Ellipse(1,1/2,2^9);
 
 %%
 % Make (multiple) inclusion(s)
-D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
-% D{2}=B*0.2 + 0.3*[-1,-1]';
+D{1} = B*0.5;
+% D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
+% D{2}=B*0.5 + 0.3*[-1,-1]';
 cnd = [10, 10]; 
 pmtt = [5, 5];
 
@@ -37,7 +39,14 @@ pmtt = [5, 5];
 
 %%
 % Make the acquisition configuration with the class |acq.Coincided|.
+
+% limited angle of view
+% cfg = acq.Coincided([0,0]', 3, 100, [1, 0.5*pi, 2*pi], 0); 
+
+% Full view
 cfg = acq.Coincided([0,0]', 3, 50, [1, 2*pi, 2*pi], 0);
+
+% Non equally distributed
 % cfg = acq.Coincided([0,0]', 3, 10, [5, 0.2*pi, 2*pi], 0);
 
 P = PDE.Conductivity_R2(D, cnd, pmtt, cfg); 
@@ -59,7 +68,7 @@ P.plot_field(sidx, F, F_bg, SX, SY, 100);
 %% Reconstruction of CGPT
 %%
 % maximum order of the reconstruction
-ord = 4;
+ord = 1;
 symmode = 1;
 
 %%
@@ -71,24 +80,25 @@ end
 
 %%
 % add white noise
-nlvl = 0.1; 
+nlvl = 0.5;
 data = P.add_white_noise(data, nlvl);
 
 %%
 % Reconstruct CGPT and show error
-fprintf('Norm of the difference between theoretical and reconstructed CGPT matrix at different frequencies:\n');
+% out = P.reconstruct_CGPT_analytic(data.MSR_noisy, ord);
+out = P.reconstruct_CGPT(data.MSR_noisy, ord, 100000, 1e-10, symmode, 'pinv');
 
-out = {};
+fprintf('Relative error between theoretical and reconstructed CGPT matrix at different frequencies:\n');
+
 for f=1:length(freqlist)
-    MSR = data.MSR{f};
-    % out{f} = P.reconstruct_CGPT(MSR, ord, 100000, 1e-10, symmode);
-    out{f} = P.reconstruct_CGPT_analytic(MSR, ord);
-
     % out{f}.res/norm(MSR,'fro')
-    norm(M{f} - out{f}.CGPT, 'fro')
+    toto = M{f}(1:2*ord, 1:2*ord);
+    (norm(toto - out.CGPT{f}, 'fro'))/norm(toto,'fro')
+    toto
+    toto - out.CGPT{f}
 end
 
 %%
 % The matrix of CGPTs M is symmetric:
-fprintf('Difference between theoretical and reconstructed CGPT matrix at the frequency %f:\n', freqlist(2));
+fprintf('M-M^t at the frequency %f:\n', freqlist(2));
 M{2}-M{2}.'

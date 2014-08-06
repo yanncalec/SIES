@@ -1,4 +1,4 @@
-function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode)
+function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method)
 % Reconstruct the contracted GPT from data using iterative method.
 %
 % Inputs:
@@ -22,6 +22,10 @@ if ~iscell(MSR) % Convert to a cell, for compability with PulseImaging_R2 class
     MSR = {MSR};
 end
 
+if nargin < 7
+    method = 'pinv';
+end
+
 if nargin < 6
     symmode = 0;
 end
@@ -35,16 +39,25 @@ end
 op = PDE.Conductivity_R2.make_linop_CGPT(obj.cfg, ord, symmode); % Construct the linear operator L
 out.op = op;
 
-for t=1:length(MSR)
-    toto = reshape(MSR{t}, [], 1);
-    X = lsqr(op.L, toto, tol, maxiter); % LSQR method
-
-    CGPT = reshape(X, 2*ord, 2*ord);
-    out.res{t} = norm(toto - op.L(CGPT, 'notransp'));
-
-    if symmode
-        CGPT = CGPT+CGPT.';
+if strcmp(method, 'lsqr')
+    for t=1:length(MSR)
+        toto = reshape(MSR{t}, [], 1);
+        X = lsqr(op.L, toto, tol, maxiter); % LSQR method
+        
+        CGPT = reshape(X, 2*ord, 2*ord);
+        out.res{t} = norm(toto - op.L(CGPT, 'notransp'));
+        
+        if symmode
+            CGPT = CGPT+CGPT.';
+        end
+        out.CGPT{t} = CGPT;
     end
-    out.CGPT{t} = CGPT;
+elseif strcmp(method, 'pinv')
+    for t=1:length(MSR)
+        CGPT = pinv(op.As)*MSR{t}*pinv(op.Ar');
+        out.res{t} = norm(MSR{t} - op.As*CGPT*op.Ar', 'fro');        
+        out.CGPT{t} = CGPT;
+    end
+    
 end
 

@@ -1,10 +1,15 @@
 function Y = convfix(X, width)
 % Convolute X with a constant window h:
-% h = 1/hwidth*[1,1,...1], length(h) = hwidth
+% h = 1/width*[1,1,...1], length(h) = width
 % so that the output Y satisfies
 % Y(1)=X(1), Y(end)=X(end)
 
 X = reshape(X, 1, []);
+
+if length(X)==0
+    error('Input vector must not be empty!');
+end
+
 h = ones(1, width) / width;
 
 toto = ones(1,width-1);

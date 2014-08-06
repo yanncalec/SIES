@@ -16,8 +16,10 @@ classdef Rectangle < shape.C2boundary
             n1 = floor(t1*nbPoints); n2 = floor(t2*nbPoints); 
             n3 = floor(t3*nbPoints); n4 = nbPoints-n1-n2-n3;
             
-            A = [-b ; a]/2; B = [b ; a]/2; 
-            C = [b ; -a]/2; D = [-b; -a]/2;
+            A = [-b ; a]/2; 
+            B = [-b; -a]/2;
+            C = [b ; -a]/2; 
+            D = [b ; a]/2; 
 
             t = (0:n1-1)/n1;
             AB = repmat(A,1,n1) + repmat(B-A,1,n1) .* repmat(t,2,1);

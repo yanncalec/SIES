@@ -10,7 +10,9 @@ function out = make_linop_CGPT(cfg, ord, symmode)
     end
 
     % The matrix related to sources:
-    if cfg.nbDirac > 1
+    if cfg.nbDirac == 1
+        As = PDE.Conductivity_R2.make_matrix_A(cfg.all_src, cfg.center, ord);
+    else
         src = zeros(2, cfg.nbDirac*cfg.Ns_total);
         
         for s=1:cfg.Ns_total
@@ -18,15 +20,13 @@ function out = make_linop_CGPT(cfg, ord, symmode)
         end
         As0 = PDE.Conductivity_R2.make_matrix_A(src, cfg.center, ord);
         As = kron(eye(cfg.Ns_total),reshape(cfg.neutCoeff, 1, [])) * As0;
-    else
-        As = PDE.Conductivity_R2.make_matrix_A(cfg.all_src, cfg.center, ord);
     end
     
     % The matrix related to receivers
     if cfg.Ng == 1
         % If there is only one group, the receiver does not depend on the source and we use a simplified model
         % for speed
-        if isa(cfg, 'acq.Coincided')
+        if isa(cfg, 'acq.Coincided') && cfg.nbDirac == 1
             Ar = As;
         else
             Ar = PDE.Conductivity_R2.make_matrix_A(cfg.all_rcv, cfg.center, ord);

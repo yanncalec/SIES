@@ -5,7 +5,6 @@
 %% Add path
 clear all;
 close all;
-clc;
 addpath('../../');
 
 %% Definition of the small inclusion
@@ -16,12 +15,11 @@ addpath('../../');
 nbPoints = 2^10; % number of discritization points on the boundary
 
 % Initialize an object of |shape.C2boundary|
-% B = shape.Ellipse(1,1/2,nbPoints);
+B = shape.Ellipse(1,1/2,nbPoints);
 % B = shape.Triangle(1/2, pi*0.8, nbPoints);
 % B = shape.Rectangle(1, 1/2, nbPoints);
-B = shape.Flower(1/2,1/2,nbPoints); % flower
+% B = shape.Flower(1/2,1/2,nbPoints); % flower
 % B = shape.Imgshape('~/Data/images/Letters/A.png', nbPoints);
-% figure; plot(B);
 
 %%
 % True shapes
@@ -42,17 +40,19 @@ pmtt = [1]; % permittivity values
 % The sources/receptors are distributed on a circle whose center is closed
 % to the mass of center of the inclusion, up to a small offset.
 
-cfg = acq.Coincided([0,0]', 3, 50, [1, 2*pi, 2*pi], false, [1,-1]);
+cfg = acq.Coincided([0,0]', 3, 10, [1, 2*pi, 2*pi], false, [1,-1]);
+% cfg = acq.Coincided([0,0]', 3, 10, [1, 0.5*pi, 2*pi], false, [1,-1]);
 
 %% Show the pulse waveform h and its Fourier transfom H
-Tmax = 5; Ntime = 2^9; % time interval length
-% [waveform, dt, hfunc, freqform, df, Hfunc] = PDE.PulseImaging_R2.make_pulse(2,Ntime);
-[waveform, dt, freqform, df] = PDE.PulseImaging_R2.make_pulse(Tmax, Ntime);
-figure; plot(linspace(0, Tmax, Ntime), waveform); title('h'); xlabel('time');
+Ntime = 2^8; % number of time steps
+Tmax0 = 8; % time duration of h at the scale 0
+[waveform, dt, Tmax, freqform, df, Fmax] = tools.make_pulse(Tmax0, Ntime, 1);
+
+figure; 
+subplot(211); plot(linspace(0, Tmax, Ntime), waveform); title('h'); xlabel('time');
 
 Nfreq = length(freqform);
-Fmax = (Nfreq-1) * df;
-figure; plot(linspace(0, Fmax, Nfreq), abs(freqform)); title('H'); xlabel('frequency');
+subplot(212); plot(linspace(0, Fmax, Nfreq), abs(freqform)); title('H'); xlabel('frequency');
 
 %%
 % Initialize an environment by passing the fish, the inclusions, the
@@ -77,64 +77,65 @@ nlvl = 0.1;
 data = P.add_white_noise(data, nlvl);
 
 %%
-% maximum order of the reconstruction
-ord = 4;
-symmode = 1;
-
-%%
 % Compute theoretical values of time-dependent CGPTs
 disp('Computation of theoretical time dependent CGPTs...');
 
+ord = 4; % maximal order
+
 tic
-[CGPTt, dt0, CGPTf] = asymp.CGPT.theoretical_CGPT_time(D, cnd, pmtt, ord, freqform, df);
+[CGPTt0, dt0, CGPTf0] = asymp.CGPT.theoretical_CGPT_time(D, cnd, pmtt, ord, freqform, df, Tmax, Ntime);
 toc
 
-CGPTt0 = asymp.CGPT.CGPT_time_truncation(CGPTt, dt0, Tmax);
-
-Ntime0 = size(CGPTt0,3);
-nrm0 = zeros(1,Ntime0);
-
-for t=1:Ntime0
-    %    nrm0(t) = norm(CGPTt0(:,:,t), 'fro');
-    nrm0(t) = trace(CGPTt0(:,:,t));
-end
-figure; plot(linspace(0, Ntime0*dt0, Ntime0), nrm0); 
-title('Trace of time-dependent CGPT: theoretical value');
-
-% M=asymp.CGPT.theoretical_CGPT(D, asymp.CGPT.lambda(cnd, pmtt, df*100), ord);
-% waveform0=squeeze(CGPTt0(1,1,:))/M(1,1);
-% figure; plot(linspace(0, Tmax, Ntime0), waveform0, 'r-.'); hold on; 
-% plot(linspace(0, Tmax, Ntime), waveform); title('h'); xlabel('time');
-
 %%
-% Reconstruct CGPT and show error
+% Reconstruct CGPT
 disp('Reconstruction of time dependent CGPTs from data...');
+
+ord = 2; % maximum order of the reconstruction
+symmode = 1; % Force the solution to be symmetric (for lsqr method only)
 
 tic
 out = P.reconstruct_CGPT_analytic(data.MSR, ord);
+%out = P.reconstruct_CGPT(data.MSR, ord, 100000, 1e-10, symmode, 'pinv');
 toc
-%toto = P.reconstruct_CGPT(MSR, ord, 100000, 1e-10, symmode);
 
-CGPTr = zeros(ord*2, ord*2, Ntime);
+CGPTtr = zeros(2*ord, 2*ord, Ntime);
+
 for t=1:Ntime
-    CGPTr(:,:,t) = out.CGPT{t};
+    CGPTtr(:,:,t) = out.CGPT{t};
 end
 
-nrm1 = zeros(1,Ntime);
-for t=1:Ntime
-    nrm1(t) = trace(CGPTr(:,:,t));
-    % nrm1(t) = norm(CGPTr(:,:,t), 'fro');
-end
-figure; 
-plot(linspace(0, Ntime*dt, Ntime), nrm1);
-title('Trace of time-dependent CGPT: reconstruction');
+%%
+% Comparaison and show error
+
+rr = 1; cc = 1;
+nrm0 = squeeze(CGPTt0(rr,cc,:));
+nrm1 = squeeze(CGPTtr(rr,cc,:));
+
+% nrm0 = zeros(1,Ntime);
+% for t=1:Ntime
+%      nrm0(t) = trace(CGPTt0(1:2*ord, 1:2*ord, t));
+% end
+% figure; plot(linspace(0, Ntime0*dt0, Ntime0), nrm0); 
+% title('Trace of time-dependent CGPT: theoretical value');
+
+% nrm1 = zeros(1,Ntime);
+% for t=1:Ntime
+%     nrm1(t) = trace(CGPTtr(1:2*ord, 1:2*ord, t));
+%     % nrm1(t) = norm(CGPTtr(1:2*ord, 1:2*ord, t), 'fro');
+% end
+% figure; plot(linspace(0, Ntime*dt, Ntime), nrm1);
+% title('Trace of time-dependent CGPT: reconstruction');
 
 figure; 
-plot(linspace(0, Ntime*dt, Ntime), nrm1); hold on;  
-plot(linspace(0, Ntime0*dt0, Ntime0), nrm0, 'r'); 
+plot(linspace(0, Tmax, Ntime), nrm1); hold on;  
+plot(linspace(0, Tmax, Ntime), nrm0, 'r'); 
+plot(linspace(0, Tmax, Ntime), 0.6237*waveform, 'g'); 
 title('Trace of time-dependent CGPT: comparison');
 
+disp('Relative error:')
+norm(nrm0-nrm1)/norm(nrm0) % This error decays as 1/Ntime, 
 
+xx
 %% Plot the potential fields and make a movie
 %%
 % Calculate the field and plot it. 
@@ -176,3 +177,14 @@ for t=1:Ntime
 end
 close(vidObj);
 
+%% The cost of initializing these objects is about 0.6s
+% tic
+% for tt=1:100
+%     cfg = acq.Coincided([0,0]', 3, 10, [1, 2*pi, 2*pi], false, [1,-1]);
+%     
+%     Ntime = 2^9; % time interval length
+%     [waveform, dt, Tmax, freqform, df, Fmax] = tools.make_pulse(Ntime, 3, 1);
+%         
+%     P = PDE.PulseImaging_R2(B{1}, cnd, pmtt, waveform, dt, cfg);
+% end
+% toc

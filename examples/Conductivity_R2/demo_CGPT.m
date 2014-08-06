@@ -96,3 +96,15 @@ Ml = asymp.CGPT.theoretical_CGPT(Bl, lambda, ord)
 
 fprintf('Relative error:\n');
 norm(Ml-M0,'fro')/norm(M0, 'fro')
+
+%% 
+% Damage by smoothing a segment of the curve
+
+Bl = B.smooth(0.2, 0.5, 0.2); % We smooth the segment corresponding to the parameterization 2*pi*[0.5-0.2, 0.5+0.2] using a constant window of length 0.2*(length of curve)
+figure; plot(Bl); axis image;
+
+fprintf('CGPT matrix of the damaged shape:\n');
+Ml = asymp.CGPT.theoretical_CGPT(Bl, lambda, ord) 
+
+fprintf('Relative error:\n');
+norm(Ml-M0,'fro')/norm(M0, 'fro')
