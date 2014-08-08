@@ -3,6 +3,18 @@
 % and reconstruction of GPTs. The reconstruction of first order GPT (PT) is
 % very stable wrt both the noise level and the angle of view.
 
+% The reconstruction of the first order GPT (or the PT) is VERY ROBUST to
+% the noise and to the angle of view in the acquisition system. For
+% example, with the following setting:
+% 50 transmitters, radius of measurement circle = 4 X radius of the object,
+% and accept only 10% of relative error of reconstruction, then
+% with 0.125pi of aperture angle, one can go up to 10% of noise
+% with 0.25pi  of aperture angle, one can go up to 50% of noise
+% with 0.5pi   of aperture angle, one can go up to 150% of noise
+%
+% In the limited view setting, the reconstruction of high order (>=2) is
+% EXTREMELY UNSTABLE. 
+
 %% Add path
 clear all;
 close all;
@@ -13,16 +25,19 @@ addpath('../../');
 %%
 % Initialize an object of |C2boundary|
 
-B = shape.Ellipse(1,1/2,2^9);
-% B = shape.Flower(1/2, 1/2, 2^10);
+% B = shape.Ellipse(1,1/2,2^9);
+B = shape.Flower(1/2, 1/2, 2^9);
 % B = shape.Triangle(1/2, pi*0.8, 2^10);
 % B = shape.Rectangle(1, 1/2, 2^10);
 % B = shape.Banana(5/2, 1, [0,10]', 0, 0, 2^10);
 % B = shape.Imgshape('~/Data/images/Letters/R.png', 2^10);
 
+fig=figure; 
+plot(B); axis image;
+saveas(fig,'~/Flower.eps','psc2');
 %%
 % Make (multiple) inclusion(s)
-D{1} = B*0.5;
+D{1} = B;
 % D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
 % D{2}=B*0.5 + 0.3*[-1,-1]';
 cnd = [10, 10]; 
@@ -41,20 +56,22 @@ pmtt = [5, 5];
 % Make the acquisition configuration with the class |acq.Coincided|.
 
 % limited angle of view
-% cfg = acq.Coincided([0,0]', 3, 100, [1, 0.5*pi, 2*pi], 0); 
+cfg = acq.Coincided([0,0]', 4, 50, [1, 0.25*pi, 2*pi], 0); 
 
 % Full view
-cfg = acq.Coincided([0,0]', 3, 50, [1, 2*pi, 2*pi], 0);
+% cfg = acq.Coincided([0,0]', 4, 50, [1, 2*pi, 2*pi], 0);
 
 % Non equally distributed
-% cfg = acq.Coincided([0,0]', 3, 10, [5, 0.2*pi, 2*pi], 0);
+% cfg = acq.Coincided([0,0]', 4, 10, [5, 0.2*pi, 2*pi], 0);
 
 P = PDE.Conductivity_R2(D, cnd, pmtt, cfg); 
 
 fig=figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
-freqlist = linspace(0, 0.1, 3);
+
+freqlist = linspace(0, 2*pi, 10); % List of working frequencies
+
 tic
 data = P.data_simulation(freqlist);
 toc
@@ -79,23 +96,36 @@ for f=1:length(freqlist)
 end
 
 %%
-% add white noise
-nlvl = 0.5;
-data = P.add_white_noise(data, nlvl);
-
-%%
 % Reconstruct CGPT and show error
 % out = P.reconstruct_CGPT_analytic(data.MSR_noisy, ord);
-out = P.reconstruct_CGPT(data.MSR_noisy, ord, 100000, 1e-10, symmode, 'pinv');
+
+% add white noise
+nlvl = .5;
+nbExp = 100;
+out = {};
+
+K = 1;
+
+% Reconstruction
+for n=1:nbExp
+    data = P.add_white_noise(data, nlvl);
+    out{n} = P.reconstruct_CGPT(data.MSR_noisy, K, 100000, 1e-10, symmode, 'pinv');
+end
 
 fprintf('Relative error between theoretical and reconstructed CGPT matrix at different frequencies:\n');
 
 for f=1:length(freqlist)
     % out{f}.res/norm(MSR,'fro')
-    toto = M{f}(1:2*ord, 1:2*ord);
-    (norm(toto - out.CGPT{f}, 'fro'))/norm(toto,'fro')
-    toto
-    toto - out.CGPT{f}
+    err = zeros(nbExp,1);
+
+    for n=1:nbExp
+        toto = out{n}.CGPT{f}(1:2*ord, 1:2*ord);
+        err(n) = (norm(M{f} - toto, 'fro'))/norm(M{f},'fro');
+    end
+    
+    fprintf('Frequency: %f, error: %f\n', freqlist(f), mean(err));
+    % toto
+    % toto - out.CGPT{f}
 end
 
 %%

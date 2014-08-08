@@ -1,4 +1,4 @@
-function [err, idx] = SD_Matching_time(I, D, method) 
+function [err, idx] = SD_Matching_time(I, D) 
 % Dictionary matching algorithm by shape descriptor
 % Inputs:
 % I: a matrix of shape descriptors (data) to be identified, each row corresponds
@@ -9,9 +9,10 @@ function [err, idx] = SD_Matching_time(I, D, method)
 % err: err(m,:) contains the similarity of the m-th data and the dictionary
 % idx: sorted dictionary elements in decreasing order of similarity
 
-if nargin<3
-    method = 0;
-end
+% 
+% if nargin<3
+%     method = 0;
+% end
 
 N = size(D,1);
 M = size(I,1);
@@ -23,12 +24,14 @@ for m=1:M
     for n=1:N
         E = I(m,:) - D(n, :);
     
-        % Different methods for measuring the similarity
-        if method==0
-            err(m, n) = norm(E, 'fro');
-        else
-            0;
-        end
+        err(m, n) = norm(E, 'fro');
+
+%         % Different methods for measuring the similarity
+%         if method==0
+%             err(m, n) = norm(E, 'fro');
+%         else
+%             0;
+%         end
     end
     [~, toto] = sort(err(m,:));    
     idx(m,:) = toto;

@@ -5,8 +5,9 @@ function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method)
 % MSR: the MSR data matrix, if it is time-dependent or multifrequency, MSR
 % need to be a cell.
 % ord: maximum order of reconstruction
-% maxiter, tol: see lsqr method
+% maxiter, tol: see lsqr method, not needed for pinv method
 % symmmode: if true a symmetric constraint on the solutionwill be incoorperated
+% method: 'pinv' for formal inversion by pseu-inverse or'lsqr' by iteration. 
 %
 % Output:
 % A structure including the following fields:

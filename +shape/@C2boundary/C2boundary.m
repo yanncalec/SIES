@@ -48,9 +48,9 @@ classdef C2boundary
 			
             % Check the curve
             flag = shape.C2boundary.check_sampling(points);
-            %             if ~flag
-            %                 warning('Singularities found in the curve! Decrease the sampling step!');
-            %             end
+            if ~flag
+                warning('Singularities found in the curve! Decrease the sampling step!');
+            end
             
 			if nargin > 4 && ~isempty(com)
 				obj.center_of_mass = com;
@@ -236,7 +236,7 @@ classdef C2boundary
 			% % fill the inside of the mask
 			% mask = imfill(mask, 4, 'holes'); % use matlab's imfill function
         end
-
+        
         function obj1 = smooth(obj, hwidth, pos, width)
             % Smooth a segment of the boundary by convolution using a constant window.
             % Inputs:
@@ -277,7 +277,7 @@ classdef C2boundary
                 obj1 = obj;
             end
         end
-        
+                
         % 		function obj1 = dammage(obj, epsilon, pos, width)
         % 			% Apply a dammage to the boundary by linking boundary points.
         %         end
@@ -464,6 +464,21 @@ classdef C2boundary
            val = 0;
         end
         
+        function  [D1, tvec1, avec1, normal1] = smooth_out_singularity(points, com, hwidth)
+            nbPoints = size(points,2);
+
+            w = max(points(1,:)) - min(points(1,:));
+            h = max(points(2,:)) - min(points(2,:));
+			box = [w, h];
+
+            p1 = tools.convfix(points(1,:), hwidth);
+            p2 = tools.convfix(points(2,:), hwidth);
+            D = [p1; p2];
+            N=length(p1); theta=2*pi*(0:N-1)/N;
+            [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, theta, nbPoints, box);
+            com1 = shape.C2boundary.get_com(D1, tvec1, normal1);
+            D1 = D1 - repmat(com1 - com, 1, size(D1, 2));
+        end
 	end
 end
 

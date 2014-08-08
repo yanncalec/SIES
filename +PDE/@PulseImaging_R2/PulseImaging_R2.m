@@ -203,24 +203,24 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
         %         A = make_matrix_A(Xs, Z, order)
         %         out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
                         
-        function out = add_white_noise_global(data, nlvl)
-            % Add white noise to simulated data. The noise is fixed by its
-            % level (proportional to the data) and is treated globally for
-            % all instants.
-            % Input:
-            % nlvl: noise level
-            
-            out = data;
-            Nt = length(data.MSR);
-            
-            toto = 0;
-            for t=1:Nt
-                toto = toto + norm(data.MSR{t}, 'fro')^2;
-            end
-            
-            noise = rand(size(data.MSR{1}));
-            data.MSR_noisy{t} = data.MSR{t} + noise * sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
-            data.sigma = sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
-        end
+        %         function out = add_white_noise_global(data, nlvl)
+        %             % Add white noise to simulated data. The noise is fixed by its
+        %             % level (proportional to the data) and is treated globally for
+        %             % all instants.
+        %             % Input:
+        %             % nlvl: noise level
+        %
+        %             out = data;
+        %             Nt = length(data.MSR);
+        %
+        %             toto = 0;
+        %             for t=1:Nt
+        %                 toto = toto + norm(data.MSR{t}, 'fro')^2;
+        %             end
+        %
+        %             noise = rand(size(data.MSR{1}));
+        %             data.MSR_noisy{t} = data.MSR{t} + noise * sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
+        %             data.sigma = sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
+        %         end
     end
 end

@@ -6,12 +6,17 @@ classdef Rectangle < shape.C2boundary
     end
     
     methods
-        function obj = Rectangle(a,b,nbPoints)
+        function obj = Rectangle(a,b,nbPoints,hwidth)
         % This function creates a structure representing an anomaly which has the
         % shape of a rectangle.
         % INPUT : - a = height,b = width
         %         - nPoints = number of discretization points
-            
+        % hwidth: width of the constant convolution window to smooth out the corner singularities (an integer)
+                        
+            if nargin<4
+                hwidth = 0;
+            end
+
             t1 = b/(a+b)/2; t2 = a/(a+b)/2; t3 = t1; t4 = t2;
             n1 = floor(t1*nbPoints); n2 = floor(t2*nbPoints); 
             n3 = floor(t3*nbPoints); n4 = nbPoints-n1-n2-n3;
@@ -31,21 +36,26 @@ classdef Rectangle < shape.C2boundary
             DA = repmat(D,1,n4) + repmat(A-D,1,n4) .* repmat(t,2,1);
 
             points = [AB BC CD DA] ;
-            tvec = [repmat((B-A),1,n1)/t1 repmat((C-B),1,n2)/t2 repmat((D-C),1,n3)/t3 repmat((A-D),1,n4)/t4]/2/pi ; % velocity vector
 
-            rotation = [[0 1];[-1 0]] ;
-            normal = rotation*tvec ;
-            normal = normal./repmat(sqrt(normal(1,:).^2+normal(2,:).^2),2,1) ; % normal vector
-
-            avec = zeros(2,nbPoints) ; % acceleration vector
-            com = [0, 0]';
-
+            if hwidth > 0
+                [points, tvec, avec, normal] = shape.C2boundary.smooth_out_singularity(points, [0,0]', hwidth);
+            else
+                tvec = [repmat((B-A),1,n1)/t1 repmat((C-B),1,n2)/t2 repmat((D-C),1,n3)/t3 repmat((A-D),1,n4)/t4]/2/pi ; % velocity vector
+                
+                rotation = [[0 1];[-1 0]] ;
+                normal = rotation*tvec ;
+                normal = normal./repmat(sqrt(normal(1,:).^2+normal(2,:).^2),2,1) ; % normal vector
+                
+                avec = zeros(2,nbPoints) ; % acceleration vector
+            end
+            
             if a==b
                 name_str = 'Square';
             else
                 name_str = 'Rectangle';
             end
-            obj = obj@shape.C2boundary(points, tvec, avec, normal, com, name_str);
+            
+            obj = obj@shape.C2boundary(points, tvec, avec, normal, [0,0]', name_str);
             
             obj.width = b;
             obj.height = a;
