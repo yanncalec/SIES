@@ -5,6 +5,9 @@ classdef Imgshape < shape.C2boundary
         function obj = Imgshape(fname, nbPoints, a, b)
         % Initialize a standard boundary from an image file
         % The non tied-off parameterization must be followed everywhere.
+
+            hwidth = 10;
+
             if nargin < 4
                 a=1; b=1;
             end
@@ -13,24 +16,20 @@ classdef Imgshape < shape.C2boundary
             
             [D0, theta0] = shape.Imgshape.boundarydet(0.5, im);    % Extract the boundary
             
-            [points, tvec, avec, normal] = shape.C2boundary.rescale(D0, theta0, nbPoints, [a, b]);
-            obj = obj@shape.C2boundary(points, tvec, avec, normal, []);
-
-            % obj.points = points;
-            % obj.nbPoints = nbPoints;
-            % obj.tvec = tvec;
-            % obj.avec = avec;
-            % obj.normal = normal;
-            % obj.center_of_mass = obj.get_center_of_mass();
+            [points, ~] = shape.C2boundary.rescale(D0, theta0, nbPoints, [a, b]);
+            
+            [points, tvec, avec, normal] = shape.C2boundary.smooth_out_singularity(points, [0,0]', hwidth, [a,b]);
             
             idx1 = strfind(fname,'/'); idxslash=idx1(end);
             idx2 = strfind(fname,'.'); idxdot=idx2(end);            
-            obj.name_str = fname(idxslash+1:idxdot-1); % Generate the name string from filename                        
-        end
-    end    
+            name_str = fname(idxslash+1:idxdot-1); % Generate the name string from filename
 
+            obj = obj@shape.C2boundary(points, tvec, avec, normal, [], name_str);
+        end    
+    end
+    
     methods(Static)
         IM=loadimgfnc(FileName)
         [D,t] = boundarydet(acc, IM)
-    end 
+    end    
 end

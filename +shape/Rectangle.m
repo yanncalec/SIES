@@ -14,7 +14,7 @@ classdef Rectangle < shape.C2boundary
         % hwidth: width of the constant convolution window to smooth out the corner singularities (an integer)
                         
             if nargin<4
-                hwidth = 0;
+                hwidth = 10;
             end
 
             t1 = b/(a+b)/2; t2 = a/(a+b)/2; t3 = t1; t4 = t2;

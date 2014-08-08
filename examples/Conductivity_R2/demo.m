@@ -40,8 +40,8 @@ saveas(fig,'~/Flower.eps','psc2');
 D{1} = B;
 % D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
 % D{2}=B*0.5 + 0.3*[-1,-1]';
-cnd = [10, 10]; 
-pmtt = [5, 5];
+cnd = 5*[1, 1]; 
+pmtt = 2*[2, 2];
 
 % D{1}=B;
 % % D{1}=(B<(0.5*pi))*0.5+[1,1]';
@@ -100,11 +100,11 @@ end
 % out = P.reconstruct_CGPT_analytic(data.MSR_noisy, ord);
 
 % add white noise
-nlvl = .5;
+nlvl = .1;
 nbExp = 100;
 out = {};
 
-K = 1;
+K = max(1, ord);
 
 % Reconstruction
 for n=1:nbExp

@@ -15,7 +15,7 @@ classdef Triangle < shape.C2boundary
             % hwidth: width of the constant convolution window to smooth out the corner singularities (an integer)
             
             if nargin<4
-                hwidth = 0;
+                hwidth = 10;
             end
             
             h = a*cos(angl/2); % height of the triangle

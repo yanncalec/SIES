@@ -464,13 +464,22 @@ classdef C2boundary
            val = 0;
         end
         
-        function  [D1, tvec1, avec1, normal1] = smooth_out_singularity(points, com, hwidth)
+        function  [D1, tvec1, avec1, normal1] = smooth_out_singularity(points, com, hwidth, box)
+            % Remove the corner singularities by convolution
+            % Inputs:
+            % points: 2XN matrix, the coordinates of the boundary
+            % com: the original center of the mass
+            % hwidth: length of the constant convolution window
+            % box: the new size [width, height] of the smoothed shape
+            
             nbPoints = size(points,2);
 
-            w = max(points(1,:)) - min(points(1,:));
-            h = max(points(2,:)) - min(points(2,:));
-			box = [w, h];
-
+            if nargin < 4 || isempty(box)
+                w = max(points(1,:)) - min(points(1,:));
+                h = max(points(2,:)) - min(points(2,:));
+                box = [w, h];
+            end
+            
             p1 = tools.convfix(points(1,:), hwidth);
             p2 = tools.convfix(points(2,:), hwidth);
             D = [p1; p2];
