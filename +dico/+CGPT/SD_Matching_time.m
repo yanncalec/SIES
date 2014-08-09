@@ -1,39 +1,39 @@
-function [err, idx] = SD_Matching_time(I, D) 
+function [err, idx] = SD_Matching_time(I, D, ascl) 
 % Dictionary matching algorithm by shape descriptor
 % Inputs:
-% I: a matrix of shape descriptors (data) to be identified, each row corresponds
-% to an independent observation
-% D: shape descriptors of dictionary in a matrix format with D(n,:) the
-% shape descriptor corresponding to the n-th shape
+% I: a cell of matrix of shape descriptors to be identified. Each I{m} has dimension (Ntime X scl X 2) and corresponds
+% to an independent observation.
+% D: a cell of matrix of shape descriptors of dictionary. Each D{n} has
+% dimension (Ntime X scl X 2) and corresponds to the n-th shape of the dictionary
+% ascl: active scales used for matching, optional
 % Outputs:
 % err: err(m,:) contains the similarity of the m-th data and the dictionary
 % idx: sorted dictionary elements in decreasing order of similarity
 
-% 
-% if nargin<3
-%     method = 0;
-% end
+if ~iscell(I)
+    I = {I}; 
+    %error('Input shape descriptors I must be a cell!');
+end
 
-N = size(D,1);
-M = size(I,1);
+M = length(I);
+N = length(D);
+
+scl = size(I{1}, 2);
+Ntime = size(I{1}, 1);
+
+if nargin<3
+    ascl = 1:scl;
+end
 
 err=zeros(M, N);
 idx=zeros(M, N);
 
 for m=1:M
     for n=1:N
-        E = I(m,:) - D(n, :);
+        E = I{m}(:,ascl,:) - D{n}(:,ascl,:);
     
-        err(m, n) = norm(E, 'fro');
-
-%         % Different methods for measuring the similarity
-%         if method==0
-%             err(m, n) = norm(E, 'fro');
-%         else
-%             0;
-%         end
+        err(m, n) = sqrt(sum(E(:).*E(:)) / Ntime);
     end
     [~, toto] = sort(err(m,:));    
     idx(m,:) = toto;
 end
-

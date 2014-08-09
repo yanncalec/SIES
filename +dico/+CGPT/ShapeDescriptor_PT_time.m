@@ -4,7 +4,7 @@ function SD = ShapeDescriptor_PT_time(CGPT, Scl)
 % the i-th scale.
 % Scl: scaling parameter for each scale
 % Output:
-% SDt: shape descriptor
+% SD: shape descriptor of size (Ntime X length(Scl) X 2)
 
 if ~iscell(CGPT) % transform to a cell
     CGPT = {CGPT};
@@ -13,23 +13,34 @@ end
 scl = length(CGPT); % total number of scales
 Ntime = size(CGPT{1}, 3);
 
-Ft = zeros(Ntime, scl);
+SD = zeros(Ntime, scl, 2);
 
 for s = 1:scl
     for t=1:Ntime
-        Ft(t, s) = norm(squeeze(CGPT{s}(1:2,1:2,t)), 'fro');
+        SD(t, s, :) = svd(squeeze(CGPT{s}(1:2,1:2,t)));
     end
     
     % renormalization, since the pulse waveform at the scale s is h_s(t) = Scl(s)*h(Scl(s)*t)
-    Ft(:, s) = Ft(:, s) / Scl(s);    
+    SD(:, s, :) = SD(:, s, :) / Scl(s);
 end
 
 % Invariant to dilation:
 % Renormalization using the first scale information 
-% cst = sum(Ft(:, 1)) / Ntime;
-cst = mean(Ft(:, 1));
+toto = squeeze(SD(:, 1, :));
+cst = mean(toto, 1);
 
-SD = reshape(Ft/cst, 1, []);
+% SD = reshape(SD / sum(cst), scl*Ntime, 2);
+SD = SD / sum(cst);
 
+% Other possible ways to construct invariants: 
+% SD1 = S(:,:,1)/cst(1); 
+% SD2 = S(:,:,2)/cst(2);
+%
+% Or:
+%
+% SD1 = (S(:,:,1)+S(:,:,2))/sum(cst);
+% SD2 = SD1;
+%
+% But these don't seem to work: confusion of ellipse with flower
 end
 
