@@ -1,10 +1,10 @@
-function SD = ShapeDescriptor_PT_time(CGPT, Scl)
+function SDt = ShapeDescriptor_PT_time(CGPT, Scl)
 % Inputs:
 % CGPT: a cell of 3D time-dependent CGPT matrix, CGPT{i} is the CGPT at
 % the i-th scale.
 % Scl: scaling parameter for each scale
 % Output:
-% SD: shape descriptor of size (Ntime X length(Scl) X 2)
+% SDt: shape descriptor of size (Ntime X length(Scl))
 
 if ~iscell(CGPT) % transform to a cell
     CGPT = {CGPT};
@@ -26,11 +26,17 @@ end
 
 % Invariant to dilation:
 % Renormalization using the first scale information 
-toto = squeeze(SD(:, 1, :));
-cst = mean(toto, 1);
+% Old version:
+% toto = squeeze(SD(:, 1, :));
+% cst = mean(toto, 1);
+% 
+% SDt = SD / sum(cst);
+% % SDt = SD / cst(2); % this can also work
 
-% SD = reshape(SD / sum(cst), scl*Ntime, 2);
-SD = SD / sum(cst);
+SDt = zeros(Ntime, scl);
+for s = 1:scl
+    SDt(:, s) = SD(:,s,1) / mean(SD(:,1,2));
+end
 
 % Other possible ways to construct invariants: 
 % SD1 = S(:,:,1)/cst(1); 
