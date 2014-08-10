@@ -1,12 +1,15 @@
 function out = data_simulation(obj, freq)
-% Simulation of the MSR matrix:
+% Simulation of the MSR matrix for different working frequencies:
 % MSR(s,r) = u-Hs(xr) = sum_l S_{D_l}[phi_l^s](x_r)
+%
 % Inputs:
 % freq: a list of working frequencies
+%
 % Output:
 % out.MSR: a list of MSR matrix of all working frequencies. The coefficient at the s-th
 % row and r-th column is the data obtained with the s-th source and the r-th that respond
 % to this source.
+
 
     if nargin<2
         freq = 0;

@@ -30,12 +30,12 @@ idx=zeros(M, N);
 
 for m=1:M
     for n=1:N
-        E = I{m}(:,sidx) - D{n}(:,sidx);
+        E = I{m}(:,sidx,:) - D{n}(:,sidx,:);
     
         err(m, n) = sqrt(sum(E(:).*E(:)) /scl/Ntime);
     end
-    [~, toto] = sort(err(m,:));    
-    idx(m,:) = toto;
+    
+    [~, idx(m,:)] = sort(err(m,:));
 end
 
 %% Old version: SD is a 3D matrix

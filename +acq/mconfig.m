@@ -76,18 +76,20 @@ classdef mconfig
         %     rid = r - (gid-1)*obj.Nr;
         % end
         
-        function val = src(obj,s)
-        % Coordinates of the s-th source
-            [gid, sid] = obj.src_query(s);
-            
-            toto = obj.src_prv{gid};
-            val = toto(:,sid);
+        function val = src(obj,sidx)
+            % Coordinates of the s-th source
+            val = zeros(2,length(sidx));
+
+            for s=1:length(sidx)
+                [gid, sid] = obj.src_query(sidx(s));                
+                toto = obj.src_prv{gid};
+                val(:,s) = toto(:,sid);
+            end
         end
 
         function val = rcv(obj, s)
-        % Coordinates of receivers responding to the s-th source
-            [gid, sid] = obj.src_query(s);
-            
+            % Coordinates of receivers responding to the s-th source
+            [gid, sid] = obj.src_query(s);            
             val = obj.rcv_prv{gid};
         end
 

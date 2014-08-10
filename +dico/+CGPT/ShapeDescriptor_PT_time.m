@@ -1,10 +1,14 @@
-function SDt = ShapeDescriptor_PT_time(CGPT, Scl)
+function SDt = ShapeDescriptor_PT_time(CGPT, Scl, method)
 % Inputs:
 % CGPT: a cell of 3D time-dependent CGPT matrix, CGPT{i} is the CGPT at
 % the i-th scale.
 % Scl: scaling parameter for each scale
 % Output:
 % SDt: shape descriptor of size (Ntime X length(Scl))
+
+if nargin < 3
+    method = 1;
+end
 
 if ~iscell(CGPT) % transform to a cell
     CGPT = {CGPT};
@@ -24,18 +28,45 @@ for s = 1:scl
     SD(:, s, :) = SD(:, s, :) / Scl(s);
 end
 
-% Invariant to dilation:
-% Renormalization using the first scale information 
-% Old version:
-% toto = squeeze(SD(:, 1, :));
-% cst = mean(toto, 1);
-% 
-% SDt = SD / sum(cst);
-% % SDt = SD / cst(2); % this can also work
+% Invariant to dilation: Renormalization using the first scale information. 
+% The idea is to use the ratio of the two singular values (larger/smaller). 
+% Mathematically however, one can prove that (larger/sqrt(smaller^2+larger^2)) is always
+% well defined. Numerically these two methods are similar.
+% The smaller singular value doesn't bring enough information: the
+% rotaional symmetric objects can be very close.
 
-SDt = zeros(Ntime, scl);
-for s = 1:scl
-    SDt(:, s) = SD(:,s,1) / mean(SD(:,1,2));
+if method == 1
+    % Method 1: L1 norm
+    cst = mean(squeeze(SD(:, 1, :)), 1);
+    SDt = squeeze(SD(:,:,1) / sum(cst));
+elseif method == 2
+    % Method 1: L2 norm
+    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    SDt = squeeze(SD(:,:,1) / cst);
+elseif method == 3
+    % Method 3: simple ratio ( this is more sensitive to noise )
+    SDt = squeeze(SD(:,:,1) / mean(SD(:,1,2)));
+elseif method == 4
+    % Method 4: use two singular values
+    cst = mean(squeeze(SD(:, 1, :)), 1);
+    SDt1 = squeeze(SD(:,:,1) / sum(cst));
+    % SDt1 = squeeze(SD(:,:,1) / mean(SD(:,1,2)));
+    
+    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    SDt2 = squeeze(SD(:,:,1) / cst);
+    
+    SDt = zeros(Ntime, scl, 2); SDt(:,:,1) = SDt1; SDt(:,:,2) = SDt2;
+    % SDt = (SDt1 + SDt2)/2;
+elseif method == 5
+    % Method 5: use two singular values
+    cst = mean(squeeze(SD(:, 1, :)), 1);
+    SDt = SD / sum(cst);
+elseif method == 6
+    % Method 6: use two singular values with L2 renormalization
+    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    SDt = SD / cst;
+else
+    error('Unknown method!');
 end
 
 % Other possible ways to construct invariants: 
@@ -49,4 +80,3 @@ end
 %
 % But these don't seem to work: confusion of ellipse with flower
 end
-

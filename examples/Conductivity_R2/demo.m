@@ -18,7 +18,7 @@
 %% Add path
 clear all;
 close all;
-clc;
+% clc;
 addpath('../../');
 %% Definition of small inclusions
 
@@ -41,7 +41,7 @@ D{1} = B;
 % D{1}=(B<(0.2*pi))*0.5 + 0.25*[1,1]';
 % D{2}=B*0.5 + 0.3*[-1,-1]';
 cnd = 5*[1, 1]; 
-pmtt = 2*[2, 2];
+pmtt = 2*[1, 1];
 
 % D{1}=B;
 % % D{1}=(B<(0.5*pi))*0.5+[1,1]';
@@ -56,7 +56,12 @@ pmtt = 2*[2, 2];
 % Make the acquisition configuration with the class |acq.Coincided|.
 
 % limited angle of view
-cfg = acq.Coincided([0,0]', 4, 50, [1, 0.25*pi, 2*pi], 0); 
+
+% Neutrality: surprisingly, this has a better conditionning
+cfg = acq.Coincided([0,0]', 4, 50, [1, 1*pi, 2*pi], false, [1,-1]);  
+
+% Single Dirac
+%cfg = acq.Coincided([0,0]', 4, 50, [1, 0.25*pi, 2*pi], false); 
 
 % Full view
 % cfg = acq.Coincided([0,0]', 4, 50, [1, 2*pi, 2*pi], 0);
@@ -70,7 +75,7 @@ fig=figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
 
-freqlist = linspace(0, 2*pi, 10); % List of working frequencies
+freqlist = linspace(0, 2*pi, 1); % List of working frequencies
 
 tic
 data = P.data_simulation(freqlist);
@@ -78,9 +83,10 @@ toc
 
 %%
 % Calculate and plot potiential fields
-sidx = 1;
-[F, F_bg, SX, SY, mask] = P.calculate_field(0.01, sidx, [0,0]', 6, 100);
-P.plot_field(sidx, F, F_bg, SX, SY, 100);
+
+% sidx = 1;
+% [F, F_bg, SX, SY, mask] = P.calculate_field(0.01, sidx, [0,0]', 6, 100);
+% P.plot_field(sidx, F, F_bg, SX, SY, 100);
 
 %% Reconstruction of CGPT
 %%
@@ -95,12 +101,17 @@ for f=1:length(freqlist)
     M{f} = asymp.CGPT.theoretical_CGPT(D, lambda, ord);
 end
 
+% % Verify that the matrix of CGPTs M is symmetric:
+% sidx = 1
+% fprintf('M-M^t at the frequency %f:\n', freqlist(sidx));
+% M{sidx}-M{sidx}.'
+
 %%
 % Reconstruct CGPT and show error
 % out = P.reconstruct_CGPT_analytic(data.MSR_noisy, ord);
 
 % add white noise
-nlvl = .1;
+nlvl = 0;
 nbExp = 100;
 out = {};
 
@@ -128,7 +139,18 @@ for f=1:length(freqlist)
     % toto - out.CGPT{f}
 end
 
-%%
-% The matrix of CGPTs M is symmetric:
-fprintf('M-M^t at the frequency %f:\n', freqlist(2));
-M{2}-M{2}.'
+fprintf('Relative error between MSR and MSR from reconstructed CGPT matrix at different frequencies:\n');
+
+for f=1:length(freqlist)
+    toto = 0;
+    for n=1:nbExp
+        toto = out{n}.res{f} + toto;
+    end
+    toto = toto / nbExp;
+    
+    fprintf('Frequency: %f, error: %f\n', freqlist(f), toto/norm(data.MSR{f}, 'fro'));
+    % toto
+    % toto - out.CGPT{f}
+end
+
+

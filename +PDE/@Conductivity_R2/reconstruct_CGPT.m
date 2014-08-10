@@ -57,6 +57,7 @@ elseif strcmp(method, 'pinv')
     for t=1:length(MSR)
         CGPT = pinv(op.As)*MSR{t}*pinv(op.Ar');
         out.res{t} = norm(MSR{t} - op.As*CGPT*op.Ar', 'fro');        
+        out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
         out.CGPT{t} = CGPT;
     end
     

@@ -1,16 +1,19 @@
-function [waveform, dt, Tmax, freqform, df, Fmax] = make_pulse(Tmax0, Ntime, scl)
+function [waveform, dt, Tmax, freqform, df, Fmax, extrema] = make_pulse(Tmax0, Ntime, scl)
 % Make gaussian pulse h (derivative of gaussian) at a given scale and its Fourier transform H.
 %
 % Inputs:
-% Tmax0: time duration of the pulse signal h (at the scale 1)
+% Tmax0: time duration of the initial pulse signal h (at the scale 1)
 % Ntime: (minimal) number of time steps on [0, Tmax]
 % scl: scaling parameter. The output pulse is h_s = scl*h(scl*t)
 %
 % Outputs:
 % waveform: discrete values of the pulse in [0, Tmax]
 % dt: dt=Tmax/Ntime, constant independent of ord, scl
+% Tmax: real duration of the output waveform
 % freqform: H(w) for discrete values of w in [0, Fmax], Fmax is the frequency bandwidth so that abs(H(Fmax))<1e-8
 % df: frequency step of freqform, constant independent of ord, scl
+% Fmax: half band width of the output waveform (larger than 1e-8)
+% extrema: index n where n*dt is a extrema of h
 
 % Convention for Fourier transform:
 %       f^(w) := \int f(t) e^(-2pi*t*w) dt.
@@ -23,6 +26,10 @@ if nargin < 3
     scl = 1;
 end
 
+if scl<0
+    error('Scaling must be positive!');
+end
+
 if nargin < 2
     Ntime = 2^10;
 end
@@ -31,6 +38,9 @@ if nargin < 1
     Tmax0 = 5; % time duration of the pulse h(x) = (exp(-pi*(x-T0)^2))^{(3)} (to be symmetric about 0)
 end    
 
+if Tmax0 < 5
+    warning('Truncation (Tmax) for the initial waveform is too small!');
+end
 
 syms x real
 assume(x>=0);
@@ -72,6 +82,11 @@ df = Fmax/Nfreq;
 % Nfreq = ceil(Fmax/df);
 Hj = inline(freqfunc);
 freqform = Hj((0:Nfreq-1)*df);
+
+dh = simplify(diff(h,x,1));
+E = solve(dh, 'Real', true)/scl;
+extrema0 = sort(ceil(E/dt));
+extrema = double(extrema0(extrema0<Ntime));
 
 % In case that the analytical form of H is not known, we can also compute by fft as follows:
 %

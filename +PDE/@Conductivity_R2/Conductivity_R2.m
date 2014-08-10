@@ -30,24 +30,35 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
     end
     
     methods(Access=protected) % Auxiliary functions
-        function val = compute_dGdn(obj, s)
-        % Construct the right hand vector of the given source.
-        % If the source is not given, compute for all sources
-            
+        function val = compute_dGdn(obj, sidx)
+            % Construct the right hand vector of the given source.
+            % If the source is not given, compute for all sources
+        
             if nargin<2
-                src = obj.cfg.all_src();
-            else
-                src = obj.cfg.src(s);
+                sidx = 1:obj.cfg.Ns_total;
             end
             
             nbPoints = obj.D{1}.nbPoints;
-            val = zeros(nbPoints*obj.nbIncls, size(src,2)); 
-            idx=0;
-            for i=1:obj.nbIncls
-                toto = tools.Laplacian.Green2D_Dn(src, obj.D{i}.points, obj.D{i}.normal);
-                val(idx+1:idx+nbPoints, :) = toto';
-                idx = idx+nbPoints; 
-            end    
+            val = zeros(nbPoints, obj.nbIncls, length(sidx)); 
+            
+            if isa(obj.cfg, 'acq.Concentric') && obj.cfg.nbDirac > 1
+                for i=1:obj.nbIncls
+                    toto = zeros(length(sidx), nbPoints);
+                    for s=1:length(sidx)
+                        psrc = obj.cfg.neutSrc(sidx(s)); % the positions of diracs of this source satisfying the neutrality condition (see acq.Concerntric.m)
+                        toto(s, :) = reshape(obj.cfg.neutCoeff, 1, []) * tools.Laplacian.Green2D_Dn(psrc, obj.D{i}.points, obj.D{i}.normal);
+                    end
+                    val(:, i, :) = toto';
+                end
+            else
+                src = obj.cfg.src(sidx);
+                for i=1:obj.nbIncls
+                    toto = tools.Laplacian.Green2D_Dn(src, obj.D{i}.points, obj.D{i}.normal);
+                    % val(idx+1:idx+nbPoints, :) = toto';
+                    val(:, i, :) = toto';
+                end
+            end
+            val = reshape(val, nbPoints*obj.nbIncls, length(sidx));
         end
         
         function Phi = compute_phi(obj, freq, s)
