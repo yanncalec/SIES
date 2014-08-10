@@ -1,4 +1,4 @@
-function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, Tmax, Ntime)
+function [CGPTt0, dt0, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df) %, Tmax, Ntime)
 % Compute the time-dependent CGPT matrix N = h*M (*:convolution) with h a
 % waveform. The computation is done in the frequency domain. 
 %
@@ -10,18 +10,18 @@ function [CGPTt, dt, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df, Tm
 % real function, hence H(-w) = conj(H(w)). We recall the convention for the Fourier transform:
 %       H(w) = \int h(t) exp(-2*pi*1i*t*w) dt
 % df: frequency sampling step for H
-% Tmax: compute CGPT on the maximal time
-% Ntime: number of resampling points equally distributed on [0, Tmax]. No resampling (only possible truncation) if
-% Ntime=0 (default).
+% % Tmax: compute CGPT on the maximal time
+% % Ntime: number of resampling points equally distributed on [0, Tmax]. No resampling (only possible truncation) if
+% % Ntime=0 (default).
 %
 % Outputs:
 % CGPTt: time-dependent CGPT matrices on [0, Tmax]
 % dt: time-step of CGPTt
 % CGPTf: CGPT matrix in the frequency domain of the band [-Fmax, Fmax] 
 
-if nargin < 8
-    Ntime = 0;
-end
+% if nargin < 8
+%     Ntime = 0;
+% end
 
 % Verify the maximum frequency so that |H(w) Mf(w)| <= eps
 NH = length(H); % original length
@@ -39,9 +39,9 @@ H = tools.zeropadding(H, 2^12, 'tail');
 Nfreq = length(H); % Length in the time domain will be Ntime = 2*Nfreq
 dt0 = 1/(df * Nfreq * 2); % time-step of CGPTt equals to 1/(2*Fmax)
 
-if Tmax > 2 * Nfreq * dt0
-    error('Tmax is too large!');
-end
+% if Tmax > 2 * Nfreq * dt0
+%     error('Tmax is too large!');
+% end
 
 % Compute Nf = H*Mf (*: product)
 [nr, nc] = size(M0);
@@ -78,5 +78,5 @@ end
 % ifft along the time axis
 CGPTt0 = real(ifft(CGPTf, [], 3)) * (2*Nfreq) * df; % 2*Nfreq is due to the Matlab FFT convention, and df is due to the approximation of the true Fourier integral
 
-[CGPTt, dt] = asymp.CGPT.CGPT_time_truncation(CGPTt0, dt0, Tmax, Ntime);
+% [CGPTt, dt] = asymp.CGPT.CGPT_time_truncation(CGPTt0, dt0, Tmax, Ntime);
 
