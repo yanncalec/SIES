@@ -1,10 +1,12 @@
-%% Make a dictionary of shape descriptors
+%% Make a dictionary of shapes and time dependent CGPTs with the class |PulseImaging|
 
-% We need to at least fix one group of values (e.g., pmtt and cnd) so that
-% the best window of observation in the frequency domain (or equivalently
+% We need to at least fix one group of values (e.g., permittivity and conductivity) 
+% so that the best window of observation in the frequency domain (or equivalently 
 % the scaling of the waveform) can be determined numerically. One criteria
-% is to use similar shapes (eg, ellipse and rectangle) and see on which
-% band of frequency these shapes are best distinguished.
+% for this is to use similar shapes (eg, ellipse and rectangle) and see on which
+% band of frequency these shapes are most easily distinct. From a
+% biological point of view, one could think that the electric fish tunes its
+% frequency to focus on certain species of preys.
 
 %%
 clear all;
@@ -21,19 +23,9 @@ disp('Construction of the dictionary...');
 nbPoints = 2^10; % Number of boundary points for discretization 2^10
 delta = 1; % standard size
 
-% All shapes have the same conductivity and permittivity values
-cnd = 10^-2; % Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
-pmtt = 1; % This value is not fixed absolutely. Interaction with the frequency.
-
 % B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
 % B{2} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse
 % B{3} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
-
-% B{3} = shape.Flower(delta/2,delta/2,nbPoints); % flower
-% B{4} = shape.Triangle(delta, pi/3, nbPoints); % triangle
-% B{5} = shape.Rectangle(delta, delta, nbPoints); % square
-% B{7} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
-% B{8} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
 
 % B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
 % B{2} = shape.Flower(delta/2,delta/2,nbPoints); % flower
@@ -48,6 +40,13 @@ B{5} = shape.Rectangle(delta, delta, nbPoints); % square
 B{6} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
 B{7} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
 B{8} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
+B{9} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd and pmtt values
+
+% All shapes have the same conductivity and permittivity values
+% Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
+cnd = [10^-2*ones(1,8), 10^-1];
+pmtt = [ones(1,8), 2]; % This value is not fixed absolutely. Interaction with the frequency.
+
 
 %%
 % Names of dictionary elements
@@ -61,9 +60,9 @@ end
 disp('Computation of theoretical time dependent CGPTs...');
 %% 
 % Parameters
-ord = 2; % order of CGPT dictionary
+ord = 1; % order of CGPT dictionary
 
-Scl = 1.5.^(-6:1);
+Scl = 1.5.^(-6:-1);
 scl = length(Scl); % number of scales
 
 Ntime = 2^10; % time interval length 2^10
@@ -96,11 +95,7 @@ for m=1:length(B) % iteration on the shape
     
     tic
     for s = 1:scl
-        % pulse waveform at the scale s
-        % [CGPTt{m,s}, dt, Tmax(s), ~] = asymp.CGPT.theoretical_CGPT_time_recon(Bts{m}, cnd, pmtt, ord, Tmax0, Ntime, Scl(s));
-        
-        % Equivalently, one can do the following:
-        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd, pmtt, ord, freqform(s,:), df(s)); % dt depends only on df
+        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, freqform(s,:), df(s)); % dt depends only on df
         
         % [CGPTt{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(CGPTt0, dt0(s), Tmax, Ntime);
     end
@@ -124,37 +119,10 @@ Dico.waveform = waveform;
 Dico.extrema = extrema;
 Dico.freqform = freqform;
 Dico.Ntime = Ntime;
-Dico.CGPTt0 = CGPTt0;
+Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
+Dico.comments = 'The value of conductivities is based on real values of sea water and fish. The value of scaling 1.5^(-6:-1) is based on numerical tuning: it is the range on which the ellipse and the rectangle are most distinct.';
 
 fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(scl),'scl.mat'];
 save(fname,'Dico','-v7.3');
 fprintf('Data saved in %s\n', fname);
 
-%% A simple test
-% % We generate first the unknown shape by transforming an element from the dictionary
-% n=3;
-% D = (B{n}<0.2)*2 + [1,1]';
-% 
-% mradius = 6*(D.diameter/2+norm(D.center_of_mass)); 
-% 
-% K = 10; % K (K>=5) is minimum number of sources for the reconstruction of the first order GPT
-% cfg = acq.Coincided([0,0]', mradius, K, [1, 2*pi, 2*pi], false, [1,-1]);
-% 
-% for s = 1:scl
-%     [waveform, dt, Tmax, ~] = tools.make_pulse(Tmax0, Ntime, Scl(s));
-%     
-%     P = PDE.PulseImaging_R2(D, cnd, pmtt, waveform, dt, cfg);
-%     
-%     data = P.data_simulation();
-%     
-%     out = P.reconstruct_CGPT(data.MSR, 1);
-% 
-%     CGPTt{s} = tools.cell2mat3D(out.CGPT);
-% end
-% 
-% figure; plot(P); axis image;
-% 
-% s=2; n=1;
-% toto = Dico.CGPTt{n,s}(1,1,:) - CGPTt{s}(1,1,:);
-% figure; plot(squeeze(toto(1,1,:)))
-% figure; plot(squeeze(Dico.CGPTt{n,s}(1,1,:))); hold on; plot(squeeze(CGPTt{s}(1,1,:)), 'r')

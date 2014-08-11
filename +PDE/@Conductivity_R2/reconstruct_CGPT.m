@@ -43,10 +43,12 @@ out.op = op;
 if strcmp(method, 'lsqr')
     for t=1:length(MSR)
         toto = reshape(MSR{t}, [], 1);
-        X = lsqr(op.L, toto, tol, maxiter); % LSQR method
+        % warning('off','all');
+        [X,flag,relres,iter] = lsqr(op.L, toto, tol, maxiter); % LSQR method
         
         CGPT = reshape(X, 2*ord, 2*ord);
         out.res{t} = norm(toto - op.L(CGPT, 'notransp'));
+        out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
         
         if symmode
             CGPT = CGPT+CGPT.';
