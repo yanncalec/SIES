@@ -200,9 +200,7 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
     end
     
     methods(Static) % Utility functions
-        %         A = make_matrix_A(Xs, Z, order)
-        %         out = make_linop_CGPT(cfg, ord, symmode)  % construct the linear operator - CGPT
-                        
+        
         function out = add_white_noise_global(data, nlvl)
             % Add white noise to simulated data. The noise is fixed by its
             % level (proportional to the data) and is treated globally for
@@ -213,20 +211,21 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
             % nlvl: noise level
             
             out = data;
-            Ntime = length(data.MSR);
+            Nt = length(data.MSR);
             
             toto = 0;
             
-            for t=1:Ntime
+            for t=1:Nt
                 toto = toto + norm(data.MSR{t}, 'fro')^2;
             end
             
-            for t=1:Ntime
+            for t=1:Nt
                 noise = randn(size(data.MSR{1}));
-                out.MSR_noisy{t} = data.MSR{t} + noise * sqrt(toto/Ntime/numel(data.MSR{1})) * nlvl;
+                out.MSR_noisy{t} = data.MSR{t} + noise * sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
             end
             
             data.sigma = sqrt(toto/Nt/numel(data.MSR{1})) * nlvl;
         end
+                        
     end
 end

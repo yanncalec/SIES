@@ -29,7 +29,7 @@ dt = zeros(1, scl);
 waveform = zeros(scl, Ntime);
 
 for s = 1:scl
-    % pulse waveform at the scale s    
+    % pulse waveform at the scale s
     [waveform(s,:), dt(s), Tmax(s), ~] = tools.make_pulse(Dico.Tmax0, Ntime, Dico.Scl(s));
 end
 
@@ -39,26 +39,27 @@ end
 Ns = 50; % Number of sources
 
 rot = pi/3; sca = 1.5; trl = [0.5, 0.5]';
-mradius = 5*(sca/2+norm(trl)); 
+mradius = 5*(sca/2+norm(trl));
 
-Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
+% Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
+Aperture = [1/16, 1/32];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
-	
+    
     fprintf('Aperture angle: %f\n', aperture);
-
-	cfg = acq.Coincided([0,0]', mradius, Ns, [1, aperture*pi, 2*pi], false, [1,-1]);
+    
+    cfg = acq.Coincided([0,0]', mradius, Ns, [1, aperture*pi, 2*pi], false, [1,-1]);
     
     data = cell(length(B), scl);
-
-    % Compute time-dependent CGPT    
+    
+    % Compute time-dependent CGPT
     tic
     for n=1:length(B) % iteration on the shape
         fprintf('Proceeding the shape %s...\n', B{n}.name_str);
         
         D = (B{n}<rot)*sca + trl;
-
+        
         for s = 1:scl
             P = PDE.PulseImaging_R2(D, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
             % figure; plot(P); axis image;
@@ -84,7 +85,9 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    fname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/data',num2str(length(B)),'_', num2str(scl),'scl.mat'];
+    pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    mkdir(pathname);
+    fname = [pathname,'data',num2str(length(B)),'_', num2str(scl),'scl.mat'];
     
     save(fname,'Data','-v7.3');
     fprintf('Data saved in %s\n', fname);
@@ -92,27 +95,27 @@ for aa=1:length(Aperture)
 end
 
 %% Some manip
-Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
-
-for aa=1:length(Aperture)
-    aperture = Aperture(aa);
-    pathname = ['/Volumes/Yue_Fat32/Pulse/Transformed/', num2str(aperture),'pi/'];
-    % pathname = '/Volumes/Yue_Fat32/Pulse/Transformed/2pi/';
-    fname = [pathname, 'data1_6scl.mat'];    
-    load(fname);    
-    Data1 = Data;
-    
-    fname = [pathname, 'data8_6scl.mat'];    
-    load(fname);
-
-    Data.data(9,:) = Data1.data;
-    Data.B = Dico.B;
-    Data.cnd = Dico.cnd;
-    Data.pmtt = Dico.pmtt;
-    
-    Data.Scl = Dico.Scl;
-    fname = [pathname,'data',num2str(length(Dico.B)),'_', num2str(scl),'scl.mat'];
-    
-    save(fname,'Data','-v7.3');
-    fprintf('Data saved in %s\n', fname);    
-end
+% Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
+% 
+% for aa=1:length(Aperture)
+%     aperture = Aperture(aa);
+%     pathname = ['/Volumes/Yue_Fat32/Pulse/Transformed/', num2str(aperture),'pi/'];
+%     % pathname = '/Volumes/Yue_Fat32/Pulse/Transformed/2pi/';
+%     fname = [pathname, 'data1_6scl.mat'];
+%     load(fname);
+%     Data1 = Data;
+%     
+%     fname = [pathname, 'data8_6scl.mat'];
+%     load(fname);
+%     
+%     Data.data(9,:) = Data1.data;
+%     Data.B = Dico.B;
+%     Data.cnd = Dico.cnd;
+%     Data.pmtt = Dico.pmtt;
+%     
+%     Data.Scl = Dico.Scl;
+%     fname = [pathname,'data',num2str(length(Dico.B)),'_', num2str(scl),'scl.mat'];
+%     
+%     save(fname,'Data','-v7.3');
+%     fprintf('Data saved in %s\n', fname);
+% end

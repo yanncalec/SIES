@@ -58,7 +58,7 @@ pmtt = 2*[1, 1];
 % limited angle of view
 
 % Neutrality: surprisingly, this has a better conditionning
-cfg = acq.Coincided([0,0]', 4, 50, [1, 1*pi, 2*pi], false, [1,-1]);  
+cfg = acq.Coincided([0,0]', 4, 50, [1, 1/16*pi, 2*pi], false, [1,-1]);  
 
 % Single Dirac
 %cfg = acq.Coincided([0,0]', 4, 50, [1, 0.25*pi, 2*pi], false); 
@@ -111,7 +111,7 @@ end
 % out = P.reconstruct_CGPT_analytic(data.MSR_noisy, ord);
 
 % add white noise
-nlvl = 0;
+nlvl = 0.2;
 nbExp = 100;
 out = {};
 
