@@ -23,31 +23,24 @@ disp('Construction of the dictionary...');
 nbPoints = 2^10; % Number of boundary points for discretization 2^10
 delta = 1; % standard size
 
-% B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
-% B{2} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse
-% B{3} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
-
-% B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
-% B{2} = shape.Flower(delta/2,delta/2,nbPoints); % flower
-% B{3} = shape.Triangle(delta, pi/3, nbPoints); % triangle
-% B{4} = shape.Rectangle(delta, delta, nbPoints); % square
-
 B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
 B{2} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse
 B{3} = shape.Flower(delta/2,delta/2,nbPoints); % flower
 B{4} = shape.Triangle(delta, pi/3, nbPoints); % triangle
 B{5} = shape.Rectangle(delta, delta, nbPoints); % square
-B{6} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
+% B{6} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
+B{6} = shape.Rectangle(delta/3, delta, nbPoints); % rectangle
 B{7} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
 B{8} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
 B{9} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd and pmtt values
 
 % All shapes have the same conductivity and permittivity values
 % Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
-cnd = [10^-2*ones(1,8), 10^-1];
+% cnd = [10^-2*ones(1,8), 10^-1];
+cnd = [2*ones(1,8), 5];
 pmtt = [ones(1,8), 2]; % This value is not fixed absolutely. Interaction with the frequency.
 
-
+figure; plot(B{6}); axis image
 %%
 % Names of dictionary elements
 names = {};
@@ -62,26 +55,27 @@ disp('Computation of theoretical time dependent CGPTs...');
 % Parameters
 ord = 1; % order of CGPT dictionary
 
-Scl = 1.5.^(-6:-1);
-scl = length(Scl); % number of scales
+% Scl = 1.5.^(-6:-1);
+Scl = 2.^(-3:2); % Best scales found by data analysis. Larger than 2, the ellipse is shrinked to a circle, smaller than -3, rotational symmetric objects are all similar to each other.
+nbScl = length(Scl); % number of scales
 
 Ntime = 2^10; % time interval length 2^10
 Tmax0 = 5;
-Tmax = zeros(1, scl);
-dt0 = zeros(1, scl);
+Tmax = zeros(1, nbScl);
+dt0 = zeros(1, nbScl);
 
-Fmax = zeros(1, scl);
-df = zeros(1, scl);
+Fmax = zeros(1, nbScl);
+df = zeros(1, nbScl);
 
-waveform = zeros(scl, Ntime);
-freqform = zeros(scl, Ntime);
+waveform = zeros(nbScl, Ntime);
+freqform = zeros(nbScl, Ntime);
 
-CGPTt0 = cell(length(B), scl);
+CGPTt0 = cell(length(B), nbScl);
 SDt = cell(length(B),1);  % Shape descriptor
 
 extrema = {};
 
-for s = 1:scl
+for s = 1:nbScl
     % pulse waveform at the scale s    
     [waveform(s,:), dt(s), Tmax(s), freqform(s, :), df(s), Fmax(s), extrema{s}] = tools.make_pulse(Tmax0, Ntime, Scl(s));
 end
@@ -94,9 +88,9 @@ for m=1:length(B) % iteration on the shape
     % Compute time-dependent CGPT
     
     tic
-    for s = 1:scl
-        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, freqform(s,:), df(s)); % dt depends only on df
-        
+    for s = 1:nbScl
+        % [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, freqform(s,:), df(s)); % dt depends only on df
+        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time_recon(B{m}, cnd(m), pmtt(m), ord, Tmax0, Ntime, Scl(s));
         % [CGPTt{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(CGPTt0, dt0(s), Tmax, Ntime);
     end
     toc
@@ -122,7 +116,7 @@ Dico.Ntime = Ntime;
 Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
 Dico.comments = 'The value of conductivities is based on real values of sea water and fish. The value of scaling 1.5^(-6:-1) is based on numerical tuning: it is the range on which the ellipse and the rectangle are most distinct.';
 
-fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(scl),'scl.mat'];
+fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 save(fname,'Dico','-v7.3');
 fprintf('Data saved in %s\n', fname);
 

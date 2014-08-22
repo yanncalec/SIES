@@ -15,7 +15,7 @@ classdef Concentric < acq.mconfig
     end
     
     methods
-        function obj = Concentric(Z, Rs, Ns, Rr, Nr, viewmode, grouped, neutCoeff)
+        function obj = Concentric(Z, Rs, Ns, Rr, Nr, viewmode, grouped, neutCoeff, neutRad)
             % INPUTS:            
             % Z: center of the measurement circle
             % Rs, Rr: radius of the source/receiver measurement circle
@@ -27,7 +27,14 @@ classdef Concentric < acq.mconfig
             % grouped: if true each arc will be treated as an independant group (limited view), if false the whole
             % set of receivers will be visible for all sources (full view but sparse array).
             % neutCoeff: coefficients of the neutrality condition
-
+            % neutRad: a smalle positive number which determines the
+            % distance between Diracs of the neutrality source:
+            % neutRad*radius_src. Default value: 0.01
+            
+            if nargin < 9
+                obj.neutRad = 0.01;
+            end
+            
             if nargin < 8 || length(neutCoeff) <= 1
                 obj.neutCoeff = 1; % No neutrality condition in case of one Dirac source
             else

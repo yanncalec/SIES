@@ -2,11 +2,13 @@ classdef Imgshape < shape.C2boundary
 % Class for importing shape from an image file
     
     methods
-        function obj = Imgshape(fname, nbPoints, a, b)
+        function obj = Imgshape(fname, nbPoints, a, b, hwidth)
         % Initialize a standard boundary from an image file
         % The non tied-off parameterization must be followed everywhere.
 
-            hwidth = 10;
+            if nargin<5
+                hwidth = 10;
+            end
 
             if nargin < 4
                 a=1; b=1;

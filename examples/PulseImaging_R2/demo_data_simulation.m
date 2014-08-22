@@ -42,7 +42,7 @@ rot = pi/3; sca = 1.5; trl = [0.5, 0.5]';
 mradius = 5*(sca/2+norm(trl));
 
 % Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
-Aperture = [1/16, 1/32];
+Aperture = [1/64, 1/128];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
@@ -93,29 +93,3 @@ for aa=1:length(Aperture)
     fprintf('Data saved in %s\n', fname);
     toc
 end
-
-%% Some manip
-% Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
-% 
-% for aa=1:length(Aperture)
-%     aperture = Aperture(aa);
-%     pathname = ['/Volumes/Yue_Fat32/Pulse/Transformed/', num2str(aperture),'pi/'];
-%     % pathname = '/Volumes/Yue_Fat32/Pulse/Transformed/2pi/';
-%     fname = [pathname, 'data1_6scl.mat'];
-%     load(fname);
-%     Data1 = Data;
-%     
-%     fname = [pathname, 'data8_6scl.mat'];
-%     load(fname);
-%     
-%     Data.data(9,:) = Data1.data;
-%     Data.B = Dico.B;
-%     Data.cnd = Dico.cnd;
-%     Data.pmtt = Dico.pmtt;
-%     
-%     Data.Scl = Dico.Scl;
-%     fname = [pathname,'data',num2str(length(Dico.B)),'_', num2str(scl),'scl.mat'];
-%     
-%     save(fname,'Data','-v7.3');
-%     fprintf('Data saved in %s\n', fname);
-% end

@@ -11,10 +11,10 @@ pathname = '/Volumes/Yue/Data/measurements/Pulse/Transformed/0.0625pi/';
 load([pathname, 'data9_6scl.mat']);
 
 %% Load the dictionary and construct shape descriptors
-load ~/Data/dico/Pulse/smalldico9_6scl.mat;
+% load ~/Data/dico/Pulse/smalldico9_6scl.mat;
 
-% Bidx = 1:length(Dico.B); % index of shapes to be identified
-Bidx = [1:2, 4:9];
+Bidx = 1:length(Dico.B); % index of shapes to be identified
+% Bidx = [1:2, 4:9];
 nbShapes = length(Bidx);
 B = Dico.B(Bidx);
 names = Dico.names(Bidx);
@@ -26,15 +26,14 @@ Sidx =  length(Dico.Scl):-1:1; % index of scales
 nbScl = length(Sidx);
 Scl = Dico.Scl(Sidx);
 
-data = Data.data(Bidx, Sidx);
-
 SDt_Dico = {}; % Shape descriptor
 
 SD_method = 2; % Method for construction of shape descriptors
 
 for m=1:nbShapes % iteration on the shape
     for s = 1:length(Scl)
-        [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Data.Tmax(s), Data.Ntime);
+        % [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Data.Tmax(s), Data.Ntime);
+        [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Dico.Tmax(s), Dico.Ntime);
     end
 
     SDt_Dico{m} = dico.CGPT.ShapeDescriptor_PT_time(CGPTt0(m,:), Scl, SD_method);
@@ -58,6 +57,8 @@ fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-0.2,1]*8);
 %% Dico-matching
 nlvl = 1; % noise level
 nbExp = 1;
+
+data = Data.data(Bidx, Sidx);
 
 Err = zeros(nbShapes, nbShapes); Idx = Err;
 
@@ -101,7 +102,7 @@ bar(eye(nbShapes).*Err, 'r');
 toto=eye(nbShapes); 
 idx = Idx(:,1); 
 bar(toto(idx, :).*Err, 'g'); 
-
+cc
 %% Compare the MSR
 n=2;
 s=1; 
