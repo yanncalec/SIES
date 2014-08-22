@@ -11,7 +11,7 @@ classdef Concentric < acq.mconfig
         
         neutCoeff % Coefficient {a_j}_j of the neutrality condition
         nbDirac % Neutrality condition f(x) = sum_j=1^nbDirac a_j dirac(x-x_{s,j}), with sum_j a_j = 0
-        neutRad = 0.1 % the positions of dirac x_{s,j} are distributed on a tangent segment at x_s of length proportional to neutRad
+        neutRad % the positions of dirac x_{s,j} are distributed on a tangent segment at x_s of length proportional to neutRad
     end
     
     methods
@@ -33,7 +33,9 @@ classdef Concentric < acq.mconfig
             
             if nargin < 9
                 obj.neutRad = 0.01;
-            end
+			else
+				obj.neutRad = neutRad;
+			end
             
             if nargin < 8 || length(neutCoeff) <= 1
                 obj.neutCoeff = 1; % No neutrality condition in case of one Dirac source

@@ -6,15 +6,17 @@ addpath('~/SIES/');
 %% Load the dictionary
 
 % pathname = '/Volumes/Yue/Data/measurements/Pulse/Transformed/0.03125pi/';
-pathname = '/Volumes/Yue/Data/measurements/Pulse/Transformed/0.0625pi/';
+% pathname = '/Volumes/Yue/Data/measurements/Pulse/Transformed/0.0625pi/';
 % pathname = '/Volumes/Yue/Data/measurements/Pulse/Transformed/1pi/';
+
+pathname = '~/Data/measurements/Pulse/Transformed/1pi/';
 load([pathname, 'data9_6scl.mat']);
 
 %% Load the dictionary and construct shape descriptors
-% load ~/Data/dico/Pulse/smalldico9_6scl.mat;
+load ~/Data/dico/Pulse/smalldico9_6scl.mat;
 
-Bidx = 1:length(Dico.B); % index of shapes to be identified
-% Bidx = [1:2, 4:9];
+% Bidx = 1:length(Dico.B); % index of shapes to be identified
+Bidx = [1:2, 4:9];
 nbShapes = length(Bidx);
 B = Dico.B(Bidx);
 names = Dico.names(Bidx);
@@ -22,7 +24,7 @@ names = Dico.names(Bidx);
 cnd = Dico.cnd(Bidx);
 pmtt = Dico.pmtt(Bidx);
 
-Sidx =  length(Dico.Scl):-1:1; % index of scales
+Sidx =  1:length(Dico.Scl); % index of scales
 nbScl = length(Sidx);
 Scl = Dico.Scl(Sidx);
 
@@ -32,8 +34,8 @@ SD_method = 2; % Method for construction of shape descriptors
 
 for m=1:nbShapes % iteration on the shape
     for s = 1:length(Scl)
-        % [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Data.Tmax(s), Data.Ntime);
-        [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Dico.Tmax(s), Dico.Ntime);
+        [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Data.Tmax(s), Data.Ntime);
+        % [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),Sidx(s)}, Dico.dt0(s), Dico.Tmax(s), Dico.Ntime);
     end
 
     SDt_Dico{m} = dico.CGPT.ShapeDescriptor_PT_time(CGPTt0(m,:), Scl, SD_method);
@@ -44,43 +46,50 @@ for m=1:nbShapes % iteration on the shape
 
 end
 
+% 
 %% Parameters 
 
 % Construct the PDE environment. Only the geometrical settings cfg in P
 % will be used in the reconstruction.
 cfg = Data.cfg;
 P = PDE.PulseImaging_R2((B{6}<pi/3)*1.5+[0.5,0.5]', cnd(2), pmtt(2), Data.waveform(2,:), Data.dt(2), cfg); 
-% fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-1,1]*8);
-fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-0.2,1]*8);
+fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-1,1]*8);
+% fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-0.2,1]*8);
 % saveas(fig, '../figures/limview1pi.eps', 'psc2');
 
 %% Dico-matching
-nlvl = 1; % noise level
+nlvl = 0.5; % noise level
 nbExp = 1;
 
 data = Data.data(Bidx, Sidx);
 
 Err = zeros(nbShapes, nbShapes); Idx = Err;
 
-CGPTt = cell(nbShapes, nbScl);
-out = cell(nbShapes, nbExp, nbScl);
+% out = cell(nbShapes, nbExp, nbScl);
+% out = cell(nbShapes, 1);
+%data_noisy = cell(nbExp,1);
+% SDt = cell(nbExp,1);
 
 for m = 1:nbShapes
+    fprintf('Proceeding the shape %s...\n', names{m}});
     errtmp = zeros(nbExp, nbShapes);
-    %idx = zeros(nbExp, nbShapes);
-    
-    for i = 1:nbExp
-        for s = 1:nbScl
-            data_noisy = P.add_white_noise_global(data{m,s}, nlvl);
-            out{m,i,s} = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1, 10^5, 10^-5, 1, 'lsqr');
-            % out{m,i,s} = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1); % pinv
+    CGPTt = cell(nbScl, nbExp);
+
+    for s = 1:nbScl
+        fprintf('...Proceeding the scale %f...\n', Dico.Scl(s));
+        parfor i = 1:nbExp
+            data_noisy{i} = P.add_white_noise_global(data{m,s}, nlvl);
+            % out{i} = P.reconstruct_CGPT(data_noisy{i}.MSR_noisy, 1, 10^5, 10^-5, 1, 'lsqr');
+            out{i} = P.reconstruct_CGPT(data_noisy{i}.MSR_noisy, 1); % pinv
             
-            CGPTt{m,s} = tools.cell2mat3D(out{m,i,s}.CGPT);
+            CGPTt{s,i} = tools.cell2mat3D(out{i}.CGPT);
         end
-        
-        SDt = dico.CGPT.ShapeDescriptor_PT_time(CGPTt(m,:), Scl, SD_method);
+    end
+
+    parfor i = 1:nbExp
+        SDt{i} = dico.CGPT.ShapeDescriptor_PT_time(CGPTt(:,i), Scl, SD_method);
         % SDt = SDt(Dico.extrema, :);
-        [errtmp(i,:), ~] = dico.CGPT.SD_Matching_time(SDt, SDt_Dico, 1:6);
+        [errtmp(i,:), ~] = dico.CGPT.SD_Matching_time(SDt{i}, SDt_Dico, 1:6);
     end
     
     Err(m,:) = mean(errtmp,1);
@@ -102,7 +111,7 @@ bar(eye(nbShapes).*Err, 'r');
 toto=eye(nbShapes); 
 idx = Idx(:,1); 
 bar(toto(idx, :).*Err, 'g'); 
-cc
+
 %% Compare the MSR
 n=2;
 s=1; 

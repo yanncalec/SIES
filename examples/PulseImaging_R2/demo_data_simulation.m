@@ -7,6 +7,7 @@
 clear all;
 close all;
 addpath('~/SIES');
+matlabpool;
 
 %% Make dictionary
 load ~/Data/dico/Pulse/smalldico9_6scl.mat;
@@ -41,8 +42,8 @@ Ns = 50; % Number of sources
 rot = pi/3; sca = 1.5; trl = [0.5, 0.5]';
 mradius = 5*(sca/2+norm(trl));
 
-% Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
-Aperture = [1/64, 1/128];
+Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
+% Aperture = [2,1,1/2,1/4,1/8];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
@@ -54,18 +55,20 @@ for aa=1:length(Aperture)
     data = cell(length(B), scl);
     
     % Compute time-dependent CGPT
-    tic
     for n=1:length(B) % iteration on the shape
-        fprintf('Proceeding the shape %s...\n', B{n}.name_str);
+        fprintf('...Proceeding the shape %s...\n', B{n}.name_str);
         
-        D = (B{n}<rot)*sca + trl;
+        D{n} = (B{n}<rot)*sca + trl;
         
-        for s = 1:scl
-            P = PDE.PulseImaging_R2(D, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
+        tic
+        parfor s = 1:scl
+            fprintf('......Proceeding the scale %f...\n', Dico.Scl(s));
+            P{s} = PDE.PulseImaging_R2(D{n}, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
             % figure; plot(P); axis image;
             
-            data{n, s} = P.data_simulation();
+            data{n,s} = P{s}.data_simulation();
         end
+        toc
     end
     
     Data = [];
@@ -85,11 +88,11 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    % pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
     mkdir(pathname);
     fname = [pathname,'data',num2str(length(B)),'_', num2str(scl),'scl.mat'];
     
     save(fname,'Data','-v7.3');
     fprintf('Data saved in %s\n', fname);
-    toc
 end

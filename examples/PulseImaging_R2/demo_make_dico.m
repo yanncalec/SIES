@@ -12,6 +12,7 @@
 clear all;
 close all;
 addpath('~/SIES');
+% matlabpool;
 
 % Path to image file of letters
 imagepath = '~/Data/images/Letters';
@@ -40,7 +41,6 @@ B{9} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd a
 cnd = [2*ones(1,8), 5];
 pmtt = [ones(1,8), 2]; % This value is not fixed absolutely. Interaction with the frequency.
 
-figure; plot(B{6}); axis image
 %%
 % Names of dictionary elements
 names = {};
@@ -88,9 +88,15 @@ for m=1:length(B) % iteration on the shape
     % Compute time-dependent CGPT
     
     tic
-    for s = 1:nbScl
-        % [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, freqform(s,:), df(s)); % dt depends only on df
-        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time_recon(B{m}, cnd(m), pmtt(m), ord, Tmax0, Ntime, Scl(s));
+    parfor s = 1:nbScl
+        fprintf('...Proceeding the scale %f...\n', Scl(s));
+        [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, ...
+                                                          freqform(s,:), df(s)); % dt depends only on df
+        
+        % % Compute CGPT by reconstruction, faster but less accurate
+        % [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time_recon(B{m}, cnd(m),
+        % pmtt(m), ord, Tmax0, Ntime, Scl(s));
+        
         % [CGPTt{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(CGPTt0, dt0(s), Tmax, Ntime);
     end
     toc
@@ -114,7 +120,7 @@ Dico.extrema = extrema;
 Dico.freqform = freqform;
 Dico.Ntime = Ntime;
 Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
-Dico.comments = 'The value of conductivities is based on real values of sea water and fish. The value of scaling 1.5^(-6:-1) is based on numerical tuning: it is the range on which the ellipse and the rectangle are most distinct.';
+% Dico.comments = 'The value of conductivities is based on real values of sea water and fish. The value of scaling is based on numerical tuning: it is the range on which the similar shapes are most distinct.';
 
 fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 save(fname,'Dico','-v7.3');

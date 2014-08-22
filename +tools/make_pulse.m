@@ -42,8 +42,9 @@ if Tmax0 < 5
     warning('Truncation (Tmax) for the initial waveform is too small!');
 end
 
-syms x real
-assume(x>=0);
+syms x real positive
+% syms x real 
+% assume(x>=0);
 
 T0 = 2.5; % -T0 is the starting time (ie, h(0) is considered as 0)
 ord = 3; % order of the derivative
@@ -85,8 +86,8 @@ freqform = Hj((0:Nfreq-1)*df);
 
 dh = simplify(diff(h,x,1));
 E = solve(dh, 'Real', true)/scl;
-extrema0 = sort(ceil(E/dt));
-extrema = double(extrema0(extrema0<Ntime));
+extrema0 = double(sort(ceil(E/dt)));
+extrema = extrema0(extrema0<Ntime);
 
 % In case that the analytical form of H is not known, we can also compute by fft as follows:
 %

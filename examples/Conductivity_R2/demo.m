@@ -17,7 +17,7 @@
 
 %% Add path
 clear all;
-close all;
+% close all;
 % clc;
 addpath('../../');
 %% Definition of small inclusions
@@ -58,7 +58,7 @@ pmtt = 2*[1, 1];
 % limited angle of view
 
 % Neutrality: surprisingly, this has a better conditionning
-cfg = acq.Coincided([0,0]', 4, 50, [1, 1/16*pi, 2*pi], false, [1,-1]);  
+cfg = acq.Coincided([0,0]', 4, 50, [1, 1/8*pi, 2*pi], false, [1,-1], 0.01);  
 
 % Single Dirac
 %cfg = acq.Coincided([0,0]', 4, 50, [1, 0.25*pi, 2*pi], false); 
