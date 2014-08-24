@@ -12,7 +12,6 @@
 clear all;
 close all;
 addpath('~/SIES');
-% matlabpool;
 
 % Path to image file of letters
 imagepath = '~/Data/images/Letters';
@@ -38,7 +37,7 @@ B{9} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd a
 % All shapes have the same conductivity and permittivity values
 % Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
 % cnd = [10^-2*ones(1,8), 10^-1];
-cnd = [2*ones(1,8), 5];
+cnd = [10*ones(1,8), 5];
 pmtt = [ones(1,8), 2]; % This value is not fixed absolutely. Interaction with the frequency.
 
 %%
@@ -56,7 +55,9 @@ disp('Computation of theoretical time dependent CGPTs...');
 ord = 1; % order of CGPT dictionary
 
 % Scl = 1.5.^(-6:-1);
-Scl = 2.^(-3:2); % Best scales found by data analysis. Larger than 2, the ellipse is shrinked to a circle, smaller than -3, rotational symmetric objects are all similar to each other.
+% Scl = 2.^(-3:2); % Best scales found by data analysis for cnd=[2...2,5]. Larger than 2, the ellipse is shrinked to a circle, smaller than -3, rotational symmetric objects are all similar to each other.
+% Scl = 2.^(-10:10);
+Scl = 2.^(0:4);
 nbScl = length(Scl); % number of scales
 
 Ntime = 2^10; % time interval length 2^10
@@ -88,7 +89,7 @@ for m=1:length(B) % iteration on the shape
     % Compute time-dependent CGPT
     
     tic
-    parfor s = 1:nbScl
+    for s = 1:nbScl
         fprintf('...Proceeding the scale %f...\n', Scl(s));
         [CGPTt0{m,s}, dt0(s), ~] = asymp.CGPT.theoretical_CGPT_time(B{m}, cnd(m), pmtt(m), ord, ...
                                                           freqform(s,:), df(s)); % dt depends only on df
@@ -125,4 +126,24 @@ Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
 fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 save(fname,'Dico','-v7.3');
 fprintf('Data saved in %s\n', fname);
+
+%% manipulations
+% Dico0 = Dico;
+% sidx = 11:15;
+% nbScl = length(sidx);
+% 
+% Dico.Scl = Dico0.Scl(sidx);
+% Dico.Tmax = Dico0.Tmax(sidx);
+% Dico.dt0 = Dico0.dt0(sidx);
+% Dico.Fmax = Dico0.Fmax(sidx);
+% Dico.df = Dico0.df(sidx);
+% Dico.waveform = Dico0.waveform(sidx,:);
+% Dico.extrema = Dico0.extrema(sidx);
+% Dico.freqform = Dico0.freqform(sidx, :);
+% Dico.CGPTt0 = Dico0.CGPTt0(:,sidx);
+% 
+% fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
+% save(fname,'Dico','-v7.3');
+% fprintf('Data saved in %s\n', fname);
+% 
 

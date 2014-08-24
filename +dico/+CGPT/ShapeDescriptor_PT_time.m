@@ -14,12 +14,12 @@ if ~iscell(CGPT) % transform to a cell
     CGPT = {CGPT};
 end
 
-scl = length(CGPT); % total number of scales
+nbScl = length(CGPT); % total number of scales
 Ntime = size(CGPT{1}, 3);
 
-SD = zeros(Ntime, scl, 2);
+SD = zeros(Ntime, nbScl, 2);
 
-for s = 1:scl
+for s = 1:nbScl
     for t=1:Ntime
         SD(t, s, :) = svd(squeeze(CGPT{s}(1:2,1:2,t)));
     end
@@ -55,7 +55,7 @@ elseif method == 4
     cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
     SDt2 = squeeze(SD(:,:,1) / cst);
     
-    SDt = zeros(Ntime, scl, 2); SDt(:,:,1) = SDt1; SDt(:,:,2) = SDt2;
+    SDt = zeros(Ntime, nbScl, 2); SDt(:,:,1) = SDt1; SDt(:,:,2) = SDt2;
     % SDt = (SDt1 + SDt2)/2;
 elseif method == 5
     % Method 5: use two singular values

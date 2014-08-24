@@ -7,43 +7,46 @@
 clear all;
 close all;
 addpath('~/SIES');
-matlabpool;
+% matlabpool;
 
-%% Make dictionary
-load ~/Data/dico/Pulse/smalldico9_6scl.mat;
+%% Load dictionary
+dico_name = '~/Data/dico/Pulse/smalldico9_5scl.mat';
+load(dico_name);
 
 Bidx = 1:length(Dico.B); % index of shapes that data will be simulated
 B = Dico.B(Bidx);
 cnd = Dico.cnd(Bidx);
 pmtt = Dico.pmtt(Bidx);
 
-%% Compute multiscale time-dependent CGPT
+%% Data simulation
 
-disp('Computation of theoretical time dependent CGPTs...');
 %%
-% Parameters
-scl = length(Dico.Scl); % number of scales
+% Parameters and waveforms
+
+% Sidx = 11:15;
+Sidx = 1:length(Dico.Scl); % index of scales that data will be simulated
+Scl = Dico.Scl(Sidx);
+nbScl = length(Scl); % number of scales
 
 Ntime = 2^9; % time interval length
-Tmax = zeros(1, scl);
-dt = zeros(1, scl);
-waveform = zeros(scl, Ntime);
+Tmax = zeros(1, nbScl);
+dt = zeros(1, nbScl);
+waveform = zeros(nbScl, Ntime);
 
-for s = 1:scl
+for s = 1:nbScl
     % pulse waveform at the scale s
-    [waveform(s,:), dt(s), Tmax(s), ~] = tools.make_pulse(Dico.Tmax0, Ntime, Dico.Scl(s));
+    [waveform(s,:), dt(s), Tmax(s), ~] = tools.make_pulse(Dico.Tmax0, Ntime, Scl(s));
 end
 
 %%
-% Data simulation
-
+% iterations
 Ns = 50; % Number of sources
 
 rot = pi/3; sca = 1.5; trl = [0.5, 0.5]';
 mradius = 5*(sca/2+norm(trl));
 
-Aperture = [0.125, 0.25, 0.5, 0.75, 1, 2];
-% Aperture = [2,1,1/2,1/4,1/8];
+% Aperture = [1/32, 1/16, 1/8, 1/4, 1/2, 1];
+Aperture = 2;
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
@@ -52,7 +55,7 @@ for aa=1:length(Aperture)
     
     cfg = acq.Coincided([0,0]', mradius, Ns, [1, aperture*pi, 2*pi], false, [1,-1]);
     
-    data = cell(length(B), scl);
+    data = cell(length(B), nbScl);
     
     % Compute time-dependent CGPT
     for n=1:length(B) % iteration on the shape
@@ -61,12 +64,12 @@ for aa=1:length(Aperture)
         D{n} = (B{n}<rot)*sca + trl;
         
         tic
-        parfor s = 1:scl
-            fprintf('......Proceeding the scale %f...\n', Dico.Scl(s));
-            P{s} = PDE.PulseImaging_R2(D{n}, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
+        for s = 1:nbScl
+            fprintf('......Proceeding the scale %f...\n', Scl(s));
+            P = PDE.PulseImaging_R2(D{n}, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
             % figure; plot(P); axis image;
             
-            data{n,s} = P{s}.data_simulation();
+            data{n,s} = P.data_simulation();
         end
         toc
     end
@@ -78,7 +81,10 @@ for aa=1:length(Aperture)
     Data.pmtt = pmtt;
     
     Data.cfg = cfg; % We keep only the configuration
-    Data.Scl = Dico.Scl;
+    Data.Scl = Scl;
+    Data.Sidx = Sidx;
+    Data.dico_name = dico_name;
+
     Data.Ntime = Ntime;
     Data.Tmax = Tmax;
     Data.dt = dt;
@@ -88,10 +94,10 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    % pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-    pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    % pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
     mkdir(pathname);
-    fname = [pathname,'data',num2str(length(B)),'_', num2str(scl),'scl.mat'];
+    fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl.mat'];
     
     save(fname,'Data','-v7.3');
     fprintf('Data saved in %s\n', fname);
