@@ -1,10 +1,12 @@
-function [waveform, dt, Tmax, freqform, df, Fmax, extrema] = make_pulse(Tmax0, Ntime, scl)
+function [waveform, dt, Tmax, freqform, df, Fmax, extrema] = make_pulse(Tmax0, Ntime, scl, L2nrm)
 % Make gaussian pulse h (derivative of gaussian) at a given scale and its Fourier transform H.
 %
 % Inputs:
 % Tmax0: time duration of the initial pulse signal h (at the scale 1)
 % Ntime: (minimal) number of time steps on [0, Tmax]
 % scl: scaling parameter. The output pulse is h_s = scl*h(scl*t)
+% L2nrm: if true then the pulse is normalized to keep the constant L^2
+% energy, optional.
 %
 % Outputs:
 % waveform: discrete values of the pulse in [0, Tmax]
@@ -21,6 +23,10 @@ function [waveform, dt, Tmax, freqform, df, Fmax, extrema] = make_pulse(Tmax0, N
 %   \sqrt(pi/a) * exp(-pi^2*w^2/a)
 % Fourier transform of x^d*exp(-pi*x^2) is
 %   (exp(-pi*w^2))^(d) / (-2*pi*i)^d
+
+if nargin < 4
+    L2nrm = false;
+end
 
 if nargin < 3
     scl = 1;
@@ -55,7 +61,7 @@ f = exp(-pi * (x-T0)^2);
 h = simplify(diff(f, x, ord)); % waveform h is the d-th derivative of f
 % f = x^d * exp(-pi * x^2);
 
-wavefunc = scl * subs(h, x, scl*x); % hj(x) = scl * h(scl * x)
+wavefunc = scl * subs(h, x, scl*x); % hj(x) = scl * h(scl * x), L^1 normalisation
 H = (2*pi*1i*x)^ord * exp(-2*pi*1i*T0*x) * exp(-pi*x^2); % Fourier transform of h
 % H = simplify((2*pi*1i*x)^ord / (-2*pi*1i)^d * diff(exp(-pi*x^2), d)); % Fourier transform of h
 freqfunc = subs(H, x, x/scl);
@@ -88,6 +94,12 @@ dh = simplify(diff(h,x,1));
 E = solve(dh, 'Real', true)/scl;
 extrema0 = double(sort(ceil(E/dt)));
 extrema = extrema0(extrema0<Ntime);
+
+% For L^2 normalization
+if L2nrm
+    waveform = waveform / sqrt(scl);
+    freqform = freqform / sqrt(scl);
+end
 
 % In case that the analytical form of H is not known, we can also compute by fft as follows:
 %

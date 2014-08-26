@@ -23,22 +23,35 @@ disp('Construction of the dictionary...');
 nbPoints = 2^10; % Number of boundary points for discretization 2^10
 delta = 1; % standard size
 
+% B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
+% B{2} = shape.Flower(delta/2,delta/2,nbPoints); % flower
+% B{3} = shape.Triangle(delta, pi/3, nbPoints); % triangle
+% B{4} = shape.Rectangle(delta/3, delta, nbPoints); % rectangle
+% 
+% % All shapes have the same conductivity and permittivity values
+% % Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
+% cnd = [10*ones(1,4)];
+% % cnd = [10*ones(1,8), 5];
+% pmtt = [ones(1,4)]; % This value is not fixed absolutely. Interaction with the frequency.
+
+% % Full dictionary
 B{1} = shape.Ellipse(delta/2,delta/2,nbPoints); % disk
 B{2} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse
 B{3} = shape.Flower(delta/2,delta/2,nbPoints); % flower
 B{4} = shape.Triangle(delta, pi/3, nbPoints); % triangle
 B{5} = shape.Rectangle(delta, delta, nbPoints); % square
-% B{6} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
 B{6} = shape.Rectangle(delta/3, delta, nbPoints); % rectangle
-B{7} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
-B{8} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
-B{9} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd and pmtt values
+B{7} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle 2
+B{8} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
+B{9} = shape.Imgshape([imagepath,'/L.png'], nbPoints); % L
+B{10} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
+B{11} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd and pmtt values
 
 % All shapes have the same conductivity and permittivity values
 % Sea water: 5 Siemens/meter, Fish: 10^-2 S/m
-% cnd = [10^-2*ones(1,8), 10^-1];
-cnd = [10*ones(1,8), 5];
-pmtt = [ones(1,8), 2]; % This value is not fixed absolutely. Interaction with the frequency.
+% cnd = [10^-2*ones(1,9), 10^-1];
+cnd = [10*ones(1,length(B)-1), 5];
+pmtt = [ones(1,length(B)-1), 2]; % This value is not fixed absolutely. Interaction with the frequency.
 
 %%
 % Names of dictionary elements
@@ -54,10 +67,10 @@ disp('Computation of theoretical time dependent CGPTs...');
 % Parameters
 ord = 1; % order of CGPT dictionary
 
-% Scl = 1.5.^(-6:-1);
-% Scl = 2.^(-3:2); % Best scales found by data analysis for cnd=[2...2,5]. Larger than 2, the ellipse is shrinked to a circle, smaller than -3, rotational symmetric objects are all similar to each other.
-% Scl = 2.^(-10:10);
-Scl = 2.^(0:4);
+% Scl = 1.5.^(-6:-1); % Best scales found by data analysis for cnd=[10^-2...10^-2,10^-1], pmtt=[1..1,2]
+% Scl = 2.^(-3:2); % Best scales found by data analysis for cnd=[2...2,5], pmtt=[1..1,2]. Larger than 2, the ellipse is shrinked to a circle, smaller than -3, rotational symmetric objects are all similar to each other.
+% Scl = 2.^(-1:2); % Best scales found by data analysis for cnd=[10...10,5], pmtt=[1..1,2]
+Scl = 2.^(-2:3);
 nbScl = length(Scl); % number of scales
 
 Ntime = 2^10; % time interval length 2^10
@@ -123,13 +136,16 @@ Dico.Ntime = Ntime;
 Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
 % Dico.comments = 'The value of conductivities is based on real values of sea water and fish. The value of scaling is based on numerical tuning: it is the range on which the similar shapes are most distinct.';
 
-fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
+fname = ['/Volumes/ExFAT200G/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 save(fname,'Dico','-v7.3');
 fprintf('Data saved in %s\n', fname);
 
 %% manipulations
+% pathname = '/Volumes/Macbook/Data/';
+% load([pathname,'/dico/Pulse/smalldico9_21scl.mat']);
+% 
 % Dico0 = Dico;
-% sidx = 11:15;
+% sidx = 10:13;
 % nbScl = length(sidx);
 % 
 % Dico.Scl = Dico0.Scl(sidx);
@@ -142,8 +158,7 @@ fprintf('Data saved in %s\n', fname);
 % Dico.freqform = Dico0.freqform(sidx, :);
 % Dico.CGPTt0 = Dico0.CGPTt0(:,sidx);
 % 
-% fname = ['~/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
+% fname = ['/Volumes/Macbook/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 % save(fname,'Dico','-v7.3');
 % fprintf('Data saved in %s\n', fname);
 % 
-

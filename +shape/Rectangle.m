@@ -6,15 +6,15 @@ classdef Rectangle < shape.C2boundary
     end
     
     methods
-        function obj = Rectangle(a,b,nbPoints,hwidth)
+        function obj = Rectangle(a,b,nbPoints,dspl)
         % This function creates a structure representing an anomaly which has the
         % shape of a rectangle.
         % INPUT : - a = height,b = width
         %         - nPoints = number of discretization points
-        % hwidth: width of the constant convolution window to smooth out the corner singularities (an integer)
+        % dspl: down-sampling factor for smoothing the corners
                         
             if nargin<4
-                hwidth = 10;
+                dspl = 20;
             end
 
             t1 = b/(a+b)/2; t2 = a/(a+b)/2; t3 = t1; t4 = t2;
@@ -35,10 +35,15 @@ classdef Rectangle < shape.C2boundary
             t = (0:n4-1)/n4;
             DA = repmat(D,1,n4) + repmat(A-D,1,n4) .* repmat(t,2,1);
 
-            points = [AB BC CD DA] ;
+            points0 = [AB BC CD DA] ;
 
-            if hwidth > 0
-                [points, tvec, avec, normal] = shape.C2boundary.smooth_out_singularity(points, [0,0]', hwidth);
+            theta = (0:nbPoints-1)/nbPoints * 2*pi;
+            
+            if dspl >= 1
+                t0 = floor(n4/2);
+                points = circshift(points0,[0,t0]);
+                
+                [points, tvec, avec, normal] = shape.C2boundary.rescale(points, theta, nbPoints, [], dspl);
             else
                 tvec = [repmat((B-A),1,n1)/t1 repmat((C-B),1,n2)/t2 repmat((D-C),1,n3)/t3 repmat((A-D),1,n4)/t4]/2/pi ; % velocity vector
                 
@@ -47,7 +52,13 @@ classdef Rectangle < shape.C2boundary
                 normal = normal./repmat(sqrt(normal(1,:).^2+normal(2,:).^2),2,1) ; % normal vector
                 
                 avec = zeros(2,nbPoints) ; % acceleration vector
-            end
+                
+                % shift the starting point to the mid-point of DA
+                t0 = floor(n4/2);
+                points = circshift(points0,[0,t0]);
+                tvec = circshift(tvec,[0,t0]);
+                normal = circshift(normal,[0,t0]);
+            end            
             
             if a==b
                 name_str = 'Square';
@@ -70,56 +81,3 @@ classdef Rectangle < shape.C2boundary
         
     end    
 end
-
-    
-% Old version by Thomas:
-%     function D = Rectangle(a,b,center,phi,M)
-%         % This function creates a structure representing an anomaly which has the
-%         % shape of a rectangle.
-%         % INPUT : - a,b = length of the border
-%     		%         - center = coordinates of the center
-%         %         - phi = rotation angle
-%         %         - M = number of discretization points
-
-%         x0 = center(1); y0 = center(2);            
-
-%         rot = [[cos(phi) -sin(phi)];[sin(phi) cos(phi)]] ;
-
-%         D.nbPoints = 2*M ;
-%         Nx = floor(a/(a+b)*M) ;
-%         Ny = M-Nx ;
-
-%         dSigmaX = a/Nx ;
-%         westX = (-a/2)*ones(1,Ny) ;
-%         northX = linspace(-a/2+dSigmaX,+a/2-dSigmaX,Nx) ;
-%         eastX = (+a/2)*ones(1,Ny) ;
-%         southX = linspace(+a/2-dSigmaX,-a/2+dSigmaX,Nx) ;
-
-%         dSigmaY = b/Ny ;
-%         westY = linspace(-b/2+dSigmaY,+b/2-dSigmaY,Ny) ;
-%         northY = (+b/2)*ones(1,Nx) ;
-%         eastY = linspace(+b/2-dSigmaY,-b/2+dSigmaY,Ny) ;
-%         southY = (-b/2)*ones(1,Nx) ;
-
-%         D.points = repmat([x0 ; y0],1,2*M) + ...
-%             rot*[westX northX eastX southX ; ...
-%             westY northY eastY southY ] ;
-
-%         D.tvec = rot*[zeros(1,Ny) dSigmaX*ones(1,Nx) zeros(1,Ny) -dSigmaX*ones(1,Nx);...
-%             dSigmaY*ones(1,Ny) zeros(1,Nx) -dSigmaY*ones(1,Ny) zeros(1,Nx)] ; % velocity vector
-%         %D.norm_Tan_square = D.tvec(1,:).^2 + D.tvec(2,:).^2 ;
-%         rotation = [[0 -1];[1 0]] ;
-%         normal = rotation*D.tvec ;
-%         D.normal = normal./repmat(sqrt(normal(1,:).^2+normal(2,:).^2),2,1) ;
-%         D.avec = zeros(2,2*M) ; % acceleration vector
-%         %D.sigma = [dSigmaY*ones(1,Ny) dSigmaX*ones(1,Nx) dSigmaY*ones(1,Ny) dSigmaX*ones(1,Nx)] ;
-
-%         D.center_of_mass = center(:);
-
-%         if a==b
-%             D.name_str = 'Square';
-%         else
-%             D.name_str = 'Rectangle';
-%         end
-%     end        
-% end

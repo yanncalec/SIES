@@ -1,31 +1,40 @@
-function SDt = ShapeDescriptor_PT_time(CGPT, Scl, method)
+function [SDt, SD] = ShapeDescriptor_PT_time(CGPT, method, Scl)
 % Inputs:
 % CGPT: a cell of 3D time-dependent CGPT matrix, CGPT{i} is the CGPT at
 % the i-th scale.
-% Scl: scaling parameter for each scale
+% method: method for computing the shape descriptor, see the code
+% Scl: normalisation of the shape descriptor (to have the same numerical
+% values across scales), optional. One must be careful in the convention 
+% of normalization for the shape descriptor (eg, normalization by sqrt(Scl) 
+% corresponds to the case L2nrm=true in the function tools.make_pulse).
+%
 % Output:
 % SDt: shape descriptor of size (Ntime X length(Scl))
 
+nbScl = length(CGPT); % total number of scales
+
 if nargin < 3
-    method = 1;
+    Scl = ones(1,nbScl);
+end
+
+if nargin < 2
+    method = 2;
 end
 
 if ~iscell(CGPT) % transform to a cell
     CGPT = {CGPT};
 end
 
-nbScl = length(CGPT); % total number of scales
 Ntime = size(CGPT{1}, 3);
 
 SD = zeros(Ntime, nbScl, 2);
+FD = zeros(Ntime, nbScl);
 
 for s = 1:nbScl
     for t=1:Ntime
-        SD(t, s, :) = svd(squeeze(CGPT{s}(1:2,1:2,t)));
-    end
-    
-    % renormalization, since the pulse waveform at the scale s is h_s(t) = Scl(s)*h(Scl(s)*t)
-    SD(:, s, :) = SD(:, s, :) / Scl(s);
+        SD(t, s, :) = svd(squeeze(CGPT{s}(1:2,1:2,t))) / Scl(s);
+        FD(t, s) = norm(CGPT{s}(1:2,1:2,t), 'fro')^2;
+    end    
 end
 
 % Invariant to dilation: Renormalization using the first scale information. 
@@ -41,7 +50,7 @@ if method == 1
     SDt = squeeze(SD(:,:,1) / sum(cst));
 elseif method == 2
     % Method 1: L2 norm
-    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    cst = sqrt(mean(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
     SDt = squeeze(SD(:,:,1) / cst);
 elseif method == 3
     % Method 3: simple ratio ( this is more sensitive to noise )
@@ -52,7 +61,7 @@ elseif method == 4
     SDt1 = squeeze(SD(:,:,1) / sum(cst));
     % SDt1 = squeeze(SD(:,:,1) / mean(SD(:,1,2)));
     
-    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    cst = sqrt(mean(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
     SDt2 = squeeze(SD(:,:,1) / cst);
     
     SDt = zeros(Ntime, nbScl, 2); SDt(:,:,1) = SDt1; SDt(:,:,2) = SDt2;
@@ -63,8 +72,11 @@ elseif method == 5
     SDt = SD / sum(cst);
 elseif method == 6
     % Method 6: use two singular values with L2 renormalization
-    cst = mean(sqrt(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
+    cst = sqrt(mean(squeeze(SD(:, 1, 1).^2 + SD(:, 1, 2).^2)));
     SDt = SD / cst;
+elseif method == 7
+    cst = mean(FD(:,1));
+    SDt = sqrt(FD / cst);
 else
     error('Unknown method!');
 end

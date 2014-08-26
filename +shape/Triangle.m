@@ -7,15 +7,15 @@ classdef Triangle < shape.C2boundary
     end
     
     methods
-        function obj = Triangle(a, angl, nbPoints, hwidth)
+        function obj = Triangle(a, angl, nbPoints, dspl)
             % INPUT :
             % a: length of the equal side
             % angl: angle between the two equal sides
             % nbPoints: number of discretization points
-            % hwidth: width of the constant convolution window to smooth out the corner singularities (an integer)
+            % dspl: down-sampling factor for smoothing the corners
             
             if nargin<4
-                hwidth = 10;
+                dspl = 20;
             end
             
             h = a*cos(angl/2); % height of the triangle
@@ -34,10 +34,14 @@ classdef Triangle < shape.C2boundary
             CA = repmat(C,1,n3) + repmat(A-C,1,n3) .* repmat(t,2,1);
             % CA = (1-t)*repmat(C,1,M) + t*repmat(A,1,M);
             
-            points = [AB BC CA] ;
+            points0 = [AB BC CA] ;
+            theta = (0:nbPoints-1)/nbPoints * 2*pi;
             
-            if hwidth > 0
-                [points, tvec, avec, normal] = shape.C2boundary.smooth_out_singularity(points, [0,0]', hwidth);
+            if dspl >= 1
+                t0 = floor(n3/2);
+                points = circshift(points0,[0,t0]);
+                
+                [points, tvec, avec, normal] = shape.C2boundary.rescale(points, theta, nbPoints, [], dspl);
             else
                 tvec = [repmat((B-A),1,n1)/t1 repmat((C-B),1,n2)/t2 repmat((A-C),1,n3)/t3]/2/pi ; % velocity vector
                 
@@ -46,6 +50,13 @@ classdef Triangle < shape.C2boundary
                 
                 normal = normal./repmat(sqrt(normal(1,:).^2+normal(2,:).^2),2,1) ;
                 avec = zeros(2,nbPoints) ; % acceleration vector
+                
+                % shift the starting point to the mid-point of CA
+                t0 = floor(n3/2);
+                points = circshift(points0,[0,t0]);
+                tvec = circshift(tvec,[0,t0]);
+                normal = circshift(normal,[0,t0]);
+
             end
                                         
             obj = obj@shape.C2boundary(points, tvec, avec, normal, [0,0]', 'Triangle'); % the triangle is centered (center of the mass) at the origine by construction

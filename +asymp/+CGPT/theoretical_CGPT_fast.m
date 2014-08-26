@@ -31,6 +31,7 @@ if ~iscell(D)
 end
 
 epsilon = 1e-8; % precision threshold for handling the case lambda = 1/2
+
 nbPoints = D{1}.nbPoints; % all C2boundary objects must have the same value of nbPoints
 nbIncls = length(D);
 
@@ -65,11 +66,20 @@ for m=1:ord
     else
         b = B(:);
     end
-    
+   
     toto = Amat\real(b);
     realphim = reshape(toto, nbPoints, nbIncls);
+
     toto = Amat\imag(b);
     imagphim = reshape(toto, nbPoints, nbIncls);
+
+    % Other ways for invert Amat for better stability. However, Amat
+    % encountered in practice (even of the non-smooth objects like triangle,
+    % rectangle) is well-conditionned. So the regularization doesn't
+    % improve the result.
+    %
+    % toto = (Amat'*Amat + eye(size(Amat))*tol)\(Amat'*imag(b));
+    % [toto,flag,relres,iter] = lsqr(Amat, imag(b), tol, iter); % LSQR method
     
     for n=1:ord
         for i=1:nbIncls

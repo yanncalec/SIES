@@ -9,8 +9,9 @@ close all;
 addpath('~/SIES');
 % matlabpool;
 
-%% Load dictionary
-dico_name = '~/Data/dico/Pulse/smalldico9_5scl.mat';
+%% Load the dictionary and construct shape descriptors
+pathname = '/Volumes/ExFAT200G/Data/';
+dico_name = [pathname,'/dico/Pulse/smalldico11_6scl.mat']
 load(dico_name);
 
 Bidx = 1:length(Dico.B); % index of shapes that data will be simulated
@@ -23,7 +24,6 @@ pmtt = Dico.pmtt(Bidx);
 %%
 % Parameters and waveforms
 
-% Sidx = 11:15;
 Sidx = 1:length(Dico.Scl); % index of scales that data will be simulated
 Scl = Dico.Scl(Sidx);
 nbScl = length(Scl); % number of scales
@@ -42,18 +42,21 @@ end
 % iterations
 Ns = 50; % Number of sources
 
-rot = pi/3; sca = 1.5; trl = [0.5, 0.5]';
-mradius = 5*(sca/2+norm(trl));
+rot = pi/3; sca = 1.5; trl = 0.1*[1, 1]';
+% rot = 0; sca = 1; trl = 0.*[1, 1]';
+
+mradius = max(12*(sca/2+norm(trl)), 10);
 
 % Aperture = [1/32, 1/16, 1/8, 1/4, 1/2, 1];
-Aperture = 2;
+% Aperture = [1/32];
+Aperture = [1/32, 1/16, 1/8, 1/4];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
     
     fprintf('Aperture angle: %f\n', aperture);
     
-    cfg = acq.Coincided([0,0]', mradius, Ns, [1, aperture*pi, 2*pi], false, [1,-1]);
+    cfg = acq.Coincided([0,0]', mradius, Ns, [1, aperture*pi, 2*pi], false, [1,-1], 0.01);
     
     data = cell(length(B), nbScl);
     
@@ -94,8 +97,8 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    pathname = ['/Volumes/Yue/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-    % pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
     mkdir(pathname);
     fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl.mat'];
     

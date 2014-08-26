@@ -16,7 +16,7 @@ classdef C2boundary
 		
 		%% Quantites which are automatically set
 		
-		theta % non tied-off parameterization between [0, 2pi), we use the left hand convention: as theta increases, the domain is at the left hand of the curve
+		theta % non tied-off parameterization between [0, 2pi)
 		cpoints % complexification of the boundary points: points(1,:)+1i*points(2,:)
 		diameter % (upper bound of) diameter of the shape, calculated from the center of mass
 		tvec_norm % norm of the tangent vector
@@ -260,15 +260,21 @@ classdef C2boundary
                     idx = max(floor(pos * obj.nbPoints),1);
                     Lt = max(1, floor(obj.nbPoints * width/2));
                     
-                    if idx-Lt<=1 || idx+Lt>=obj.nbPoints
-                        error('Index error: increase pos or reduce width to keep width<min(nbPoints-pos,pos).');
+                    s1 = 1; s2 = obj.nbPoints;
+                    if idx-Lt>=1
+                        s1 = idx-Lt;
                     end
-                    
-                    q1 = tools.convfix(obj.points(1,idx-Lt:idx+Lt), hwidth);
-                    q2 = tools.convfix(obj.points(2,idx-Lt:idx+Lt), hwidth);
-                    p1 = [obj.points(1, 1:idx-Lt-1), q1, obj.points(1,idx+Lt+1:end)];
-                    p2 = [obj.points(2, 1:idx-Lt-1), q2, obj.points(2,idx+Lt+1:end)];
+
+                    if idx+Lt<=obj.nbPoints
+                        s2 = idx+Lt;
+                    end
+
+                    q1 = tools.convfix(obj.points(1,s1:s2), hwidth);
+                    q2 = tools.convfix(obj.points(2,s1:s2), hwidth);
+                    p1 = [obj.points(1, 1:s1-1), q1, obj.points(1,s2+1:end)];
+                    p2 = [obj.points(2, 1:s1-1), q2, obj.points(2,s2+1:end)];
                 end
+
                 D = [p1; p2];
                 N=length(p1); theta=2*pi*(0:N-1)/N;
                 [D1, tvec1, avec1, normal1] = shape.C2boundary.rescale(D, theta, obj.nbPoints, obj.box);
@@ -371,39 +377,11 @@ classdef C2boundary
 	
 	methods(Static)
 		[tvec,avec,normal] = boundary_vec(D, t)
+        [D, tvec, avec, normal] = boundary_vec_interpl(points0, theta0, theta)
 		
-		function [D, tvec, avec, normal] = rescale(D0, theta0, nbPoints, nsize)
-			% Compute all variables related to the boundary from the boundary points D0 and the
-			% parameterization theta0. The new boundary will be reinterpolated with nbPoints, and
-			% optionally rescaled to fit the rectangle of size nsize=[width, height].
-			
-			if nargin == 4 && ~isempty(nsize) 
-				minx = min(D0(1,:)) ;
-				maxx = max(D0(1,:)) ;
-				miny = min(D0(2,:)) ;
-				maxy = max(D0(2,:)) ;
-				
-				z0 = [(minx+maxx)/2; (miny+maxy)/2];
-				D0 = [(D0(1,:)-z0(1))*(nsize(1)/(maxx-minx)); (D0(2,:)-z0(2))*(nsize(2)/(maxy-miny))];
-			end
-			
-			theta = (0:nbPoints-1)/nbPoints*2*pi;
-			D = interp1(theta0, D0', theta, 'spline');
-			D = D';
-			
-			% high order bounary informations
-			[tvec,avec,normal] = shape.C2boundary.boundary_vec(D, theta);
-			
-			% obj.points = D;
-			% obj.tvec = tvec;
-			% obj.avec = avec;
-			% obj.normal = normal;
-			% obj.name_str = name_str;
-			% obj.center_of_mass = obj.get_center_of_mass(); % run only once, for speed
-		end
-		
-		%        D = rescale_shape(D0, w, h, nbPoints)
-		
+        [D, tvec, avec, normal] = rescale(D0, theta0, nbPoints, nsize, dspl)
+        [D, tvec, avec, normal] = rescale_diff(D0, theta0, nbPoints, nsize)
+        				
 		function val = get_com(points, tvec, normal)
 			% Calculate the center of mass of a shape by the Stokes formula
 			% INPUTS:

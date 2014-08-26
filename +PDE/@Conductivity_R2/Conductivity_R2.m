@@ -80,6 +80,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
                 dGdn = obj.compute_dGdn(s);
             end
 
+            % phi = (Amat'*Amat+1e-8*eye(size(Amat)))\(Amat'*dGdn); % function phi of all sources and inclusions
             phi = Amat\dGdn; % function phi of all sources and inclusions
             Phi = cell(obj.nbIncls, 1);
             

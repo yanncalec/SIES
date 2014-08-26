@@ -167,9 +167,9 @@ function [D,t] = boundarydet(acc, IM)
 % $$$         end              
     end
     
-% $$$     % We redefine the parameter and tie off the the paramerization:
-% $$$     t = (0:2*pi/length(D):2*pi) ;      % length of t is length(D)+1
-% $$$     D = [D;D(1,:)]' ; 
+    %      % We redefine the parameter and tie off the the paramerization:
+    %      t = (0:2*pi/length(D):2*pi) ;      % length of t is length(D)+1
+    %      D = [D;D(1,:)]' ;
 
     % By definition, D is a closed curve. But we remove the end
     % point of D and t such that the first and the last elements in
@@ -177,12 +177,12 @@ function [D,t] = boundarydet(acc, IM)
     t = 2*pi*(0:length(D)-1)/length(D) ;
     D = D' ; 
     
-% $$$     % We interpolate D wtih 1024 (2^10) points (this is a fine
-% $$$     % interpolation that can be reduced later). 
-% $$$     tnew = 2*pi*(0:Np-1)/Np;
-% $$$     D = interp1(t,D,tnew,'spline') ;
-% $$$     D = D';
-% $$$     t = tnew;
+    %     % We interpolate D wtih 1024 (2^10) points (this is a fine
+    %     % interpolation that can be reduced later).
+    %     tnew = 2*pi*(0:Np-1)/Np;
+    %     D = interp1(t,D,tnew,'spline') ;
+    %     D = D';
+    %     t = tnew;
 end
 
 % SPACE SHIFT FUNCTION
