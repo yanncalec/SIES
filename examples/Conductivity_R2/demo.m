@@ -30,6 +30,8 @@ clear all;
 close all;
 % addpath('../../');
 
+% Letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 %% Definition of small inclusions
 
 %%
@@ -37,12 +39,15 @@ close all;
 
 % B = shape.Ellipse(1,1/2,2^10);
 % B = shape.Flower(1/2, 1/2, 2^10);
-% B = shape.Triangle(1/2, pi/3, 2^10, 10);
+B = shape.Triangle(1/2, pi/3, 2^10, 10);
 % B = shape.Rectangle(1, 1/2, 2^10);
 % B = shape.Banana(2, 1/4, [0,10]', 0, 0, 2^10); B = B-B.center_of_mass;
-B = shape.Imgshape('~/Data/images/Letters/A.png', 2^10, 10); 
+% B = shape.Imgshape('~/Data/images/Letters/A.png', 2^10, 10); 
+
 % B = B.smooth(10);
-% figure; plot(B); axis image;
+% B = B.local_perturbation(-0.05, 0.3, 0.05);
+
+figure; plot(B); axis image;
 
 %%
 % Make (multiple) inclusion(s)
@@ -86,7 +91,7 @@ fig=figure; plot(P, 'LineWidth', 1); axis image;
 
 %% Simulation of the MSR data
 
-freqlist = linspace(0, 10*pi, 3); % List of working frequencies
+freqlist = linspace(0, 100*pi, 5); % List of working frequencies
 %freqlist = 0;
 
 data = P.data_simulation(freqlist);
@@ -153,19 +158,20 @@ for f=1:length(freqlist)
     % toto - out.CGPT{f}
 end
 
-fprintf('Relative error between MSR and MSR from reconstructed CGPT matrix at different frequencies:\n');
+%% Error of MSR
+% fprintf('Relative error between MSR and MSR from reconstructed CGPT matrix at different frequencies:\n');
 
-for f=1:length(freqlist)
-    toto = 0;
-    for n=1:nbExp
-        toto = out{n}.res{f} + toto;
-    end
-    toto = toto / nbExp;
+% for f=1:length(freqlist)
+%     toto = 0;
+%     for n=1:nbExp
+%         toto = out{n}.res{f} + toto;
+%     end
+%     toto = toto / nbExp;
     
-    fprintf('Frequency: %f, error: %f\n', freqlist(f), toto/norm(data.MSR{f}, 'fro'));
-    % toto
-    % toto - out.CGPT{f}
-end
+%     fprintf('Frequency: %f, error: %f\n', freqlist(f), toto/norm(data.MSR{f}, 'fro'));
+%     % toto
+%     % toto - out.CGPT{f}
+% end
 
 %% Invariants of PT
 

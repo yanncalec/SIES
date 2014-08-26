@@ -43,8 +43,10 @@ B{5} = shape.Rectangle(delta, delta, nbPoints); % square
 B{6} = shape.Rectangle(delta/3, delta, nbPoints); % rectangle
 B{7} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle 2
 B{8} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
-B{9} = shape.Imgshape([imagepath,'/L.png'], nbPoints); % L
-B{10} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
+
+% B{9} = shape.Imgshape([imagepath,'/B.png'], nbPoints); % B
+B{9} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
+B{10} = shape.Imgshape([imagepath,'/L.png'], nbPoints); % L
 B{11} = shape.Ellipse(delta*1,delta/2,nbPoints); % ellipse 2 with different cnd and pmtt values
 
 % All shapes have the same conductivity and permittivity values

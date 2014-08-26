@@ -1,4 +1,4 @@
-function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method)
+function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method, op)
 % Reconstruct the contracted GPT from data using iterative method.
 %
 % Inputs:
@@ -8,6 +8,7 @@ function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method)
 % maxiter, tol: see lsqr method, not needed for pinv method
 % symmmode: if true a symmetric constraint on the solutionwill be incoorperated
 % method: 'pinv' for formal inversion by pseu-inverse or'lsqr' by iteration. 
+% op: operator of the linear system, optional. op can be given by user for a fast computation.
 %
 % Output:
 % A structure including the following fields:
@@ -21,6 +22,10 @@ function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method)
 
 if ~iscell(MSR) % Convert to a cell, for compability with PulseImaging_R2 class
     MSR = {MSR};
+end
+
+if nargin < 8
+    op = [];
 end
 
 if nargin < 7
@@ -37,7 +42,11 @@ if nargin < 4
     maxiter = 10^5;
 end
 
-op = PDE.Conductivity_R2.make_linop_CGPT(obj.cfg, ord, symmode); % Construct the linear operator L
+if isempty(op)
+    % Construct the linear operator L if it is not given by user
+    op = PDE.Conductivity_R2.make_linop_CGPT(obj.cfg, ord, symmode); 
+end
+
 out.op = op;
 
 if strcmp(method, 'lsqr')

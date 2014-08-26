@@ -10,8 +10,9 @@ addpath('~/SIES');
 % matlabpool;
 
 %% Load the dictionary and construct shape descriptors
-pathname = '/Volumes/ExFAT200G/Data/';
-dico_name = [pathname,'/dico/Pulse/smalldico11_6scl.mat']
+% pathname = '/Volumes/ExFAT200G/Data/';
+pathname = '~/Data/';
+dico_name = [pathname,'/dico/Pulse/smalldico11_6scl.mat'];
 load(dico_name);
 
 Bidx = 1:length(Dico.B); % index of shapes that data will be simulated
@@ -19,10 +20,7 @@ B = Dico.B(Bidx);
 cnd = Dico.cnd(Bidx);
 pmtt = Dico.pmtt(Bidx);
 
-%% Data simulation
-
-%%
-% Parameters and waveforms
+%% Parameters and waveforms
 
 Sidx = 1:length(Dico.Scl); % index of scales that data will be simulated
 Scl = Dico.Scl(Sidx);
@@ -38,8 +36,8 @@ for s = 1:nbScl
     [waveform(s,:), dt(s), Tmax(s), ~] = tools.make_pulse(Dico.Tmax0, Ntime, Scl(s));
 end
 
-%%
-% iterations
+%% Data simulation
+
 Ns = 50; % Number of sources
 
 rot = pi/3; sca = 1.5; trl = 0.1*[1, 1]';
@@ -47,9 +45,7 @@ rot = pi/3; sca = 1.5; trl = 0.1*[1, 1]';
 
 mradius = max(12*(sca/2+norm(trl)), 10);
 
-% Aperture = [1/32, 1/16, 1/8, 1/4, 1/2, 1];
-% Aperture = [1/32];
-Aperture = [1/32, 1/16, 1/8, 1/4];
+Aperture = [1/32, 1/16, 1/8, 1/4, 1/2, 1, 2];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
@@ -61,20 +57,19 @@ for aa=1:length(Aperture)
     data = cell(length(B), nbScl);
     
     % Compute time-dependent CGPT
-    for n=1:length(B) % iteration on the shape
-        fprintf('...Proceeding the shape %s...\n', B{n}.name_str);
+    for s = 1:nbScl
+        fprintf('...Proceeding the scale %f...\n', Scl(s));
         
-        D{n} = (B{n}<rot)*sca + trl;
+        parfor n=1:length(B) % iteration on the shape
+            fprintf('......Proceeding the shape %s...\n', B{n}.name_str);
         
-        tic
-        for s = 1:nbScl
-            fprintf('......Proceeding the scale %f...\n', Scl(s));
-            P = PDE.PulseImaging_R2(D{n}, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
+            D = (B{n}<rot)*sca + trl;
+            
+            P = PDE.PulseImaging_R2(D, cnd(n), pmtt(n), waveform(s,:), dt(s), cfg);
             % figure; plot(P); axis image;
             
             data{n,s} = P.data_simulation();
         end
-        toc
     end
     
     Data = [];
@@ -97,7 +92,8 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
     % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
     mkdir(pathname);
     fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl.mat'];

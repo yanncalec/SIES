@@ -123,7 +123,7 @@ classdef Conductivity_R2 < PDE.Small_Inclusions
         plot_field(obj, s, F, F_bg, Sx, Sy, nbLine, varargin)
         
         % Reconstruction of contracted GPT matrix
-        out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method) 
+        out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method, op) 
         out = reconstruct_CGPT_analytic(obj, MSR, ord)
         
         % Reconstruction of wavelet polarization tensors
