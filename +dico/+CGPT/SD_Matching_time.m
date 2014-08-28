@@ -1,4 +1,4 @@
-function [err, idx] = SD_Matching_time(I, D, Sidx) 
+function [err, idx, idxall] = SD_Matching_time(I, D, Sidx) 
 % Dictionary matching algorithm by shape descriptor
 % Inputs:
 % I: a cell of matrix of shape descriptors to be identified. Each I{m} has dimension (Ntime X scl) and corresponds
@@ -9,7 +9,8 @@ function [err, idx] = SD_Matching_time(I, D, Sidx)
 % Outputs:
 % err: err(m,:,s) contains the similarity of the m-th data and the dictionary. The third
 % dimension is the comparaison using the first s scales in Sidx
-% idx: sorted dictionary elements in decreasing order of similarity
+% idxall: sorted dictionary elements in decreasing order of similarity
+% idx : 2D matrix, idx(m,s) is the identified shape of the m-th data at the s-th scale
 
 if ~iscell(I)
     I = {I}; 
@@ -28,17 +29,19 @@ end
 nbScl = length(Sidx);
 
 err=zeros(M, N, nbScl);
-idx=zeros(M, N, nbScl);
+idx=zeros(M, nbScl);
+idxall=zeros(M, N, nbScl);
 
 for m=1:M
     for n=1:N
-        E = I{m}(:,Sidx,:) - D{n}(:,Sidx,:);
+        E = I{m}(:,Sidx) - D{n}(:,Sidx);
         Esq = sum(E.*E, 1);
 
         for s=1:nbScl
             err(m, n, s) = sqrt(sum(Esq(1:s))/s/Ntime);
-            [~, idx(m,:,s)] = sort(err(m,:,s));
+            [~, idxall(m, :, s)] = sort(err(m,:,s));
         end    
     end
 end
 
+idx = squeeze(idxall(:, 1, :));

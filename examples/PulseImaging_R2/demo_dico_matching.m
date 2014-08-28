@@ -12,6 +12,7 @@ load([pathname, 'measurements/Pulse/Transformed/',num2str(aperture),'pi/data11_6
 
 %% Load the dictionary and construct shape descriptors
 load([pathname,'/dico/Pulse/smalldico11_6scl.mat']);
+Dico.names{7} = 'Rectangle 2'; Dico.names{11} = 'Ellipse 2';
 
 % Bidx = 1:length(Dico.B); % index of shapes to be identified
 % Bidx = [1, 2, 4:6, 8, 10:11]; % without flower, rectangle 2, L
@@ -21,7 +22,6 @@ load([pathname,'/dico/Pulse/smalldico11_6scl.mat']);
 % Bidx = [1:3, 5, 6, 9:11]; % without triangle, rectangle 2, A
 Bidx = [1:3, 5, 6, 8, 9, 11]; % without triangle, rectangle 2, E
 
-% Bidx = [1, 2, 3, 9];
 nbShapes = length(Bidx);
 B = Dico.B(Bidx);
 names = Dico.names(Bidx);
@@ -36,7 +36,8 @@ Scl = Dico.Scl(Sidx);
 nbScl = length(Scl);
 
 SDt_Dico = {}; % Shape descriptor
-SD_Dico = {}; % Shape descriptor
+
+% SD_Dico = {}; 
 
 SD_method = 2; % Method for construction of shape descriptors
 
@@ -48,7 +49,8 @@ for m=1:nbShapes % iteration on the shape
         [CGPTt0{m,s}, dt(s)] = asymp.CGPT.CGPT_time_truncation(Dico.CGPTt0{Bidx(m),ss}, Dico.dt0(ss), Data.Tmax(ss), Data.Ntime);
     end
 
-    [SDt_Dico{m}, SD_Dico{m}] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt0(m,:), SD_method, Scl);
+    % [SDt_Dico{m}, SD_Dico{m}] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt0(m,:), SD_method, Scl);
+    [SDt_Dico{m}, ~] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt0(m,:), SD_method, Scl);
 
     % % Or use only the extrema as shape descriptors (less robust to noise)
     %     toto = dico.CGPT.ShapeDescriptor_PT_time(CGPTt, Scl, SD_method);
@@ -91,88 +93,47 @@ op = PDE.Conductivity_R2.make_linop_CGPT(cfg, 1, 1); % Construct the linear oper
 % saveas(fig, '../figures/limview1pi.eps', 'psc2');
 
 %% Dico-matching
-NLvls0 = 0.5:0.5:8; 
 
-NLvls = NLvls0(5:8);
-nbNlv = length(NLvls);
+Hrecon = @(data, nlvl)P.addnoise_recon(data, nlvl, 1, 10^5, 10^-8, 1, 'lsqr', op);
 
-nbExp = 1000;
+Hsd = @(CGPTt)dico.CGPT.ShapeDescriptor_PT_time(CGPTt, SD_method, Scl);
 
-data = Data.data(Bidx, :);
+Hmatching = @(SDt, SDt_Dico)dico.CGPT.SD_Matching_time(SDt, SDt_Dico);
 
-Err0 = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx0 = Err0;
-
-% out = cell(nbShapes, nbExp, nbScl);
-
-% SDt = {}; SD = {};
-% out = cell(nbShapes, nbExp, nbScl);
-% data_noisy = cell(nbExp,1);
-% SDt = cell(nbExp,1);
-
-for k = 1:nbNlv
-    nlvl = NLvls(k); % noise level
-    fprintf('Proceeding the noise level %f...\n', nlvl);
-    
-    for m = 1:nbShapes
-        tic
-
-        fprintf('Proceeding the shape %s...\n', names{m});
-
-        errtmp = zeros(nbExp, nbShapes, nbScl);
-        
-        for p = 1:nbExp        
-            % fprintf('...Proceeding the %d-th trial of %d...\n', p, nbExp);
-            
-            CGPTt = {};
-
-            for s = 1:nbScl
-                ss = Sidx(s);
-                
-                data_noisy = P.add_white_noise_global(data{m,ss}, nlvl);
-                out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1, 10^5, 10^-8, 1, 'lsqr', op);
-                % out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1); % pinv
-                
-                CGPTt{s} = tools.cell2mat3D(out.CGPT);
-            end
-
-            % [SDt{m,p}, SD{m,p}] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt(m,p,:), SD_method, Scl);
-            % SDt = SDt(Dico.extrema, :);
-            % [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt{m,p}, SDt_Dico);
-
-            [SDt, ~] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt, SD_method, Scl);
-            [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt, SDt_Dico);
-        end
-        
-        Err0(k,m,:,:) = mean(errtmp,1);
-        for s=1:nbScl
-            [~, Idx0(k,m,:,s)] = sort(Err0(k,m,:,s));
-        end
-        toc
-    end
+data = cell(nbShapes,1);
+for m=1:nbShapes    
+    data{m} = Data.data(Bidx(m), Sidx);
 end
 
-Res.Err0 = Err0;
-Res.Idx0 = Idx0;
-Res.nbExp = nbExp;
-Res.NLvls = NLvls;
+NLvls0 = 0.5:0.5:8;
+nbNlv = length(NLvls);
 
-% pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-pathname = ['~/Data/outputs/Pulse/',num2str(aperture),'pi/'];
-% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
-mkdir(pathname);
-fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl_', num2str(NLvls(1)), 'nlvl.mat'];
+nbExp = 1;
+Mrate = cell(nbNlv, nbShapes);
+Err0 = cell(nbNlv, nbShapes); 
 
-save(fname,'Res','-v7.3');
-fprintf('Data saved in %s\n', fname);
+parfor k = 1:length(NLvls0)
+    [Mrate(k,:), Err0(k,:)] = dico.montecarlo_matching(data, SDt_Dico, nbExp, NLvls0(k), Hrecon, ...
+                                                      Hsd, Hmatching, 0);
+end
 
-cc
 %% Interpretation of the result We show in a bar figure the similarity between dictionary
 % shape descriptors and the one reconstructed from data.
 
-ss=1; kk=1; % choose the scale and noise level
-Err = squeeze(Err0(kk,:,:,ss)); 
-Idx = squeeze(Idx0(kk,:,:,ss)); 
+Err = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx = Err;
+
+for k = 1:nbNlv
+    for m = 1:nbShapes
+        for s=1:nbScl
+            Err(k, m, :, s) = Err0{k,m}(:,s);
+            [~, Idx(k,m,:,s)] = sort(Err(k, m, :, s));
+        end
+    end
+end
+
+ss=4; kk=1; % choose the scale and noise level
+Err = squeeze(Err(kk,:,:,ss)); 
+Idx = squeeze(Idx(kk,:,:,ss)); 
 
 fig1= figure; 
 bar(Err, 'facecolor', 'none'); 
@@ -187,3 +148,89 @@ toto = eye(nbShapes);
 idx = Idx(:,1); 
 bar(toto(idx, :).*Err, 'g'); 
 
+%% Save the results
+
+Res.Err = Err;
+Res.Idx = Idx;
+Res.Mrate = Mrate;
+Res.NLvls = NLvls;
+Res.nbExp = nbExp;
+
+% pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+pathname = ['~/Data/outputs/Pulse/',num2str(aperture),'pi/'];
+% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
+mkdir(pathname);
+fname = [pathname,'matching_data',num2str(length(B)),'_', num2str(nbScl),'scl_', num2str(NLvls(1)), 'nlvl.mat'];
+
+save(fname,'Res','-v7.3');
+fprintf('Data saved in %s\n', fname);
+
+%% old version
+% Err0 = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx0 = Err0;
+
+% % out = cell(nbShapes, nbExp, nbScl);
+
+% % SDt = {}; SD = {};
+% % out = cell(nbShapes, nbExp, nbScl);
+% % data_noisy = cell(nbExp,1);
+% % SDt = cell(nbExp,1);
+
+% for k = 1:nbNlv
+%     nlvl = NLvls(k); % noise level
+%     fprintf('Proceeding the noise level %f...\n', nlvl);
+    
+%     for m = 1:nbShapes
+%         tic
+
+%         fprintf('Proceeding the shape %s...\n', names{m});
+
+%         errtmp = zeros(nbExp, nbShapes, nbScl);
+        
+%         for p = 1:nbExp        
+%             % fprintf('...Proceeding the %d-th trial of %d...\n', p, nbExp);
+            
+%             CGPTt = {};
+
+%             for s = 1:nbScl
+%                 ss = Sidx(s);
+                
+%                 data_noisy = P.add_white_noise_global(data{m,ss}, nlvl);
+%                 out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1, 10^5, 10^-8, 1, 'lsqr', op);
+%                 % out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1); % pinv
+                
+%                 CGPTt{s} = tools.cell2mat3D(out.CGPT);
+%             end
+
+%             % [SDt{m,p}, SD{m,p}] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt(m,p,:), SD_method, Scl);
+%             % SDt = SDt(Dico.extrema, :);
+%             % [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt{m,p}, SDt_Dico);
+
+%             [SDt, ~] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt, SD_method, Scl);
+%             [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt, SDt_Dico);
+%         end
+        
+%         Err0(k,m,:,:) = mean(errtmp,1);
+%         for s=1:nbScl
+%             [~, Idx0(k,m,:,s)] = sort(Err0(k,m,:,s));
+%         end
+%         toc
+%     end
+% end
+
+% Res.Err0 = Err0;
+% Res.Idx0 = Idx0;
+% Res.nbExp = nbExp;
+% Res.NLvls = NLvls;
+
+% % pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+% pathname = ['~/Data/outputs/Pulse/',num2str(aperture),'pi/'];
+% % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+% % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
+% mkdir(pathname);
+% fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl_', num2str(NLvls(1)), 'nlvl.mat'];
+
+% save(fname,'Res','-v7.3');
+% fprintf('Data saved in %s\n', fname);
+
+% cc

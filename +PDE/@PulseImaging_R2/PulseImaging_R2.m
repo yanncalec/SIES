@@ -197,6 +197,9 @@ classdef PulseImaging_R2 < PDE.Conductivity_R2
         % Calculate and plot the potential fields
         [F, F_bg, Sx, Sy, mask] = calculate_field(obj, Ntime, s, z0, width, N)
         % plot_field(obj, s, F, F_bg, Sx, Sy, nbLine, varargin)
+
+        % Add white noise and reconstruct time-dependent CGPT
+        CGPTt = addnoise_recon(obj, data, nlvl, ord, maxiter, tol, symmode, method, op)
     end
     
     methods(Static) % Utility functions

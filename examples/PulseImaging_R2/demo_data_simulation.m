@@ -7,7 +7,7 @@
 clear all;
 close all;
 addpath('~/SIES');
-% matlabpool;
+matlabpool;
 
 %% Load the dictionary and construct shape descriptors
 % pathname = '/Volumes/ExFAT200G/Data/';
@@ -40,12 +40,12 @@ end
 
 Ns = 50; % Number of sources
 
-rot = pi/3; sca = 1.5; trl = 0.1*[1, 1]';
-% rot = 0; sca = 1; trl = 0.*[1, 1]';
+% rot = pi/3; sca = 1.5; trl = 0.1*[1, 1]';
+rot = 0; sca = 1; trl = 0.*[1, 1]';
 
 mradius = max(12*(sca/2+norm(trl)), 10);
 
-Aperture = [1/32, 1/16, 1/8, 1/4, 1/2, 1, 2];
+Aperture = [1/16, 1/8, 1/4, 1/2, 1, 2];
 
 for aa=1:length(Aperture)
     aperture = Aperture(aa);
@@ -92,7 +92,8 @@ for aa=1:length(Aperture)
     Data.sca = sca;
     Data.trl = trl;
     
-    pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    % pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
+    pathname = ['~/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
     % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
     % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
     mkdir(pathname);
