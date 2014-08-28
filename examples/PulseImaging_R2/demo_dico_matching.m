@@ -5,8 +5,11 @@ addpath('~/SIES/');
 
 %% Load the dictionary
 aperture = 1/32;
-pathname = '~/Data/';
+
+% pathname = '~/Data/';
 % pathname = '/Volumes/ExFAT200G/Data/';
+
+pathname = '/Volumes/Yue_Fat32/Data/';
 load([pathname, 'measurements/Pulse/Transformed/',num2str(aperture),'pi/data11_6scl.mat']);
 % load([pathname, 'measurements/Pulse/Original/',num2str(aperture),'pi/data11_6scl.mat']);
 
@@ -108,7 +111,7 @@ end
 NLvls = 0.5:0.5:8;
 nbNlv = length(NLvls);
 
-nbExp = 1;
+nbExp = 250;
 Mrate = cell(nbNlv, nbShapes);
 Err0 = cell(nbNlv, nbShapes); 
 
@@ -157,10 +160,8 @@ Res.Mrate = Mrate;
 Res.NLvls = NLvls;
 Res.nbExp = nbExp;
 
-% pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
 pathname = ['~/Data/outputs/Pulse/',num2str(aperture),'pi/'];
-% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-% pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
+% pathname = ['/Volumes/ExFAT200G/Data/outputs/Pulse/',num2str(aperture),'pi/'];
 mkdir(pathname);
 fname = [pathname,'matching_data',num2str(length(B)),'_', num2str(nbScl),'scl_', num2str(NLvls(1)), 'nlvl.mat'];
 
