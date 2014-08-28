@@ -105,15 +105,16 @@ for m=1:nbShapes
     data{m} = Data.data(Bidx(m), Sidx);
 end
 
-NLvls0 = 0.5:0.5:8;
+NLvls = 0.5:0.5:8;
 nbNlv = length(NLvls);
 
 nbExp = 1;
 Mrate = cell(nbNlv, nbShapes);
 Err0 = cell(nbNlv, nbShapes); 
 
-parfor k = 1:length(NLvls0)
-    [Mrate(k,:), Err0(k,:)] = dico.montecarlo_matching(data, SDt_Dico, nbExp, NLvls0(k), Hrecon, ...
+parfor k = 1:length(NLvls)
+    fprintf('Proceeding the noise level %f...\n', NLvls(k));
+    [Mrate(k,:), Err0(k,:)] = dico.montecarlo_matching(data, SDt_Dico, nbExp, NLvls(k), Hrecon, ...
                                                       Hsd, Hmatching, 0);
 end
 
