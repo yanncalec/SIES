@@ -2,14 +2,13 @@
 close all;
 clear all;
 addpath('~/SIES/');
+matlabpool open;
 
 %% Load the dictionary
 aperture = 1/32;
 
-% pathname = '~/Data/';
+pathname = '~/Data/';
 % pathname = '/Volumes/ExFAT200G/Data/';
-
-pathname = '/Volumes/Yue_Fat32/Data/';
 load([pathname, 'measurements/Pulse/Transformed/',num2str(aperture),'pi/data11_6scl.mat']);
 % load([pathname, 'measurements/Pulse/Original/',num2str(aperture),'pi/data11_6scl.mat']);
 
@@ -65,7 +64,7 @@ end
 Err0 = zeros(nbShapes, nbShapes, nbScl); Idx0 = Err0;
 
 for m = 1:nbShapes
-    [Err0(m,:,:), Idx0(m,:,:)] = dico.CGPT.SD_Matching_time(SDt_Dico{m}, SDt_Dico);
+    [Err0(m,:,:), ~, Idx0(m,:,:)] = dico.CGPT.SD_Matching_time(SDt_Dico{m}, SDt_Dico);
 end
 
 Err = Err0(:,:,end); Idx = Idx0(:,:,end); % use all scales
@@ -108,14 +107,15 @@ for m=1:nbShapes
     data{m} = Data.data(Bidx(m), Sidx);
 end
 
-NLvls = 0.5:0.5:8;
+NLvls0 = 0.5:0.5:8;
+NLvls = NLvls0(1:end);
 nbNlv = length(NLvls);
 
 nbExp = 250;
 Mrate = cell(nbNlv, nbShapes);
 Err0 = cell(nbNlv, nbShapes); 
 
-parfor k = 1:length(NLvls)
+parfor k = 1:nbNlv
     fprintf('Proceeding the noise level %f...\n', NLvls(k));
     [Mrate(k,:), Err0(k,:)] = dico.montecarlo_matching(data, SDt_Dico, nbExp, NLvls(k), Hrecon, ...
                                                       Hsd, Hmatching, 0);
@@ -168,6 +168,31 @@ fname = [pathname,'matching_data',num2str(length(B)),'_', num2str(nbScl),'scl_',
 save(fname,'Res','-v7.3');
 fprintf('Data saved in %s\n', fname);
 
+%% Plot Mrate
+Rrate0 = zeros(nbNlv, nbShapes);
+scl = 4;
+NLvls1 = 0.5:0.1:8;
+Rrate = zeros(length(NLvls1), nbShapes);
+
+for n=1:nbShapes
+	for k=1:nbNlv
+		Rrate0(k,n) = Mrate{k,n}(scl);
+	end
+	
+	Rrate(:,n) = interp1(NLvls, Rrate0(:,n), NLvls1, 'cubic'); % Interpolation if necessary
+end
+	
+fig = figure; 
+plot(NLvls1, Rrate(:,1), '-bo'); hold on;
+plot(NLvls1, Rrate(:,2), '--ro');
+plot(NLvls1, Rrate(:,3), '-g+');
+plot(NLvls1, Rrate(:,4), ':-g');
+plot(NLvls1, Rrate(:,5), 'v-y');
+plot(NLvls1, Rrate(:,6), '--r');
+plot(NLvls1, Rrate(:,7), '.-b');
+plot(NLvls1, Rrate(:,8), '^-b');
+
+legend(names);
 %% old version
 % Err0 = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx0 = Err0;
 
