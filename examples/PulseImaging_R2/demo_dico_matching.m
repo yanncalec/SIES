@@ -170,8 +170,8 @@ fprintf('Data saved in %s\n', fname);
 
 %% Plot Mrate
 Rrate0 = zeros(nbNlv, nbShapes);
-scl = 4;
-NLvls1 = 0.5:0.1:8;
+scl = 1;
+NLvls1 = 0.5:0.25:8;
 Rrate = zeros(length(NLvls1), nbShapes);
 
 for n=1:nbShapes
@@ -185,14 +185,17 @@ end
 fig = figure; 
 plot(NLvls1, Rrate(:,1), '-bo'); hold on;
 plot(NLvls1, Rrate(:,2), '--ro');
-plot(NLvls1, Rrate(:,3), '-g+');
-plot(NLvls1, Rrate(:,4), ':-g');
-plot(NLvls1, Rrate(:,5), 'v-y');
-plot(NLvls1, Rrate(:,6), '--r');
-plot(NLvls1, Rrate(:,7), '.-b');
-plot(NLvls1, Rrate(:,8), '^-b');
+plot(NLvls1, Rrate(:,3), '-g*');
+plot(NLvls1, Rrate(:,4), '-bs');
+plot(NLvls1, Rrate(:,5), '--rs');
+plot(NLvls1, Rrate(:,6), '-g^');
+plot(NLvls1, Rrate(:,7), '--bv');
+plot(NLvls1, Rrate(:,8), '-.go');
 
 legend(names);
+
+ylim([-0.01, 1.01]);
+
 %% old version
 % Err0 = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx0 = Err0;
 
