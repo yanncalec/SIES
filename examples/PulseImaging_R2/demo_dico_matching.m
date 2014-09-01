@@ -2,13 +2,12 @@
 close all;
 clear all;
 addpath('~/SIES/');
-matlabpool open;
+% matlabpool open;
 
 %% Load the dictionary
-aperture = 1/32;
+aperture = 1/16;
 
-pathname = '~/Data/';
-% pathname = '/Volumes/ExFAT200G/Data/';
+pathname = '/Volumes/Yue_Fat32/Data/';
 load([pathname, 'measurements/Pulse/Transformed/',num2str(aperture),'pi/data11_6scl.mat']);
 % load([pathname, 'measurements/Pulse/Original/',num2str(aperture),'pi/data11_6scl.mat']);
 
@@ -107,15 +106,15 @@ for m=1:nbShapes
     data{m} = Data.data(Bidx(m), Sidx);
 end
 
-NLvls0 = 0.5:0.5:8;
+NLvls0 = [2];
 NLvls = NLvls0(1:end);
 nbNlv = length(NLvls);
 
-nbExp = 250;
+nbExp = 1;
 Mrate = cell(nbNlv, nbShapes);
 Err0 = cell(nbNlv, nbShapes); 
 
-parfor k = 1:nbNlv
+for k = 1:nbNlv
     fprintf('Proceeding the noise level %f...\n', NLvls(k));
     [Mrate(k,:), Err0(k,:)] = dico.montecarlo_matching(data, SDt_Dico, nbExp, NLvls(k), Hrecon, ...
                                                       Hsd, Hmatching, 0);
@@ -124,20 +123,20 @@ end
 %% Interpretation of the result We show in a bar figure the similarity between dictionary
 % shape descriptors and the one reconstructed from data.
 
-Err = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx = Err;
+Err_all = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx_all = Err_all;
 
 for k = 1:nbNlv
     for m = 1:nbShapes
         for s=1:nbScl
-            Err(k, m, :, s) = Err0{k,m}(:,s);
-            [~, Idx(k,m,:,s)] = sort(Err(k, m, :, s));
+            Err_all(k, m, :, s) = Err0{k,m}(:,s);
+            [~, Idx_all(k,m,:,s)] = sort(Err_all(k, m, :, s));
         end
     end
 end
 
 ss=4; kk=1; % choose the scale and noise level
-Err = squeeze(Err(kk,:,:,ss)); 
-Idx = squeeze(Idx(kk,:,:,ss)); 
+Err = squeeze(Err_all(kk,:,:,ss)); 
+Idx = squeeze(Idx_all(kk,:,:,ss)); 
 
 fig1= figure; 
 bar(Err, 'facecolor', 'none'); 
@@ -151,11 +150,13 @@ bar(eye(nbShapes).*Err, 'r');
 toto = eye(nbShapes); 
 idx = Idx(:,1); 
 bar(toto(idx, :).*Err, 'g'); 
+ylim([0, 0.375]);
+saveas(fig1, '../figures/ErrorBar_pi16_nlvl2.eps', 'psc2');
 
 %% Save the results
 
-Res.Err = Err;
-Res.Idx = Idx;
+Res.Err_all = Err_all;
+Res.Idx_all = Idx_all;
 Res.Mrate = Mrate;
 Res.NLvls = NLvls;
 Res.nbExp = nbExp;
@@ -168,99 +169,30 @@ fname = [pathname,'matching_data',num2str(length(B)),'_', num2str(nbScl),'scl_',
 save(fname,'Res','-v7.3');
 fprintf('Data saved in %s\n', fname);
 
-%% Plot Mrate
-Rrate0 = zeros(nbNlv, nbShapes);
+%% Plot results of monte-carlo test
+MC0 = zeros(nbNlv, nbShapes);
 scl = 1;
 NLvls1 = 0.5:0.25:8;
-Rrate = zeros(length(NLvls1), nbShapes);
+MC = zeros(length(NLvls1), nbShapes);
 
 for n=1:nbShapes
 	for k=1:nbNlv
-		Rrate0(k,n) = Mrate{k,n}(scl);
+		MC0(k,n) = Mrate{k,n}(scl);
 	end
 	
-	Rrate(:,n) = interp1(NLvls, Rrate0(:,n), NLvls1, 'cubic'); % Interpolation if necessary
+	MC(:,n) = interp1(NLvls, MC0(:,n), NLvls1, 'cubic'); % Interpolation if necessary
 end
 	
 fig = figure; 
-plot(NLvls1, Rrate(:,1), '-bo'); hold on;
-plot(NLvls1, Rrate(:,2), '--ro');
-plot(NLvls1, Rrate(:,3), '-g*');
-plot(NLvls1, Rrate(:,4), '-bs');
-plot(NLvls1, Rrate(:,5), '--rs');
-plot(NLvls1, Rrate(:,6), '-g^');
-plot(NLvls1, Rrate(:,7), '--bv');
-plot(NLvls1, Rrate(:,8), '-.go');
+plot(NLvls1, MC(:,1), '-bo'); hold on;
+plot(NLvls1, MC(:,2), '--ro');
+plot(NLvls1, MC(:,3), '-g*');
+plot(NLvls1, MC(:,4), '-bs');
+plot(NLvls1, MC(:,5), '--rs');
+plot(NLvls1, MC(:,6), '-g^');
+plot(NLvls1, MC(:,7), '--bv');
+plot(NLvls1, MC(:,8), '-.go');
 
 legend(names);
 
 ylim([-0.01, 1.01]);
-
-%% old version
-% Err0 = zeros(nbNlv, nbShapes, nbShapes, nbScl); Idx0 = Err0;
-
-% % out = cell(nbShapes, nbExp, nbScl);
-
-% % SDt = {}; SD = {};
-% % out = cell(nbShapes, nbExp, nbScl);
-% % data_noisy = cell(nbExp,1);
-% % SDt = cell(nbExp,1);
-
-% for k = 1:nbNlv
-%     nlvl = NLvls(k); % noise level
-%     fprintf('Proceeding the noise level %f...\n', nlvl);
-    
-%     for m = 1:nbShapes
-%         tic
-
-%         fprintf('Proceeding the shape %s...\n', names{m});
-
-%         errtmp = zeros(nbExp, nbShapes, nbScl);
-        
-%         for p = 1:nbExp        
-%             % fprintf('...Proceeding the %d-th trial of %d...\n', p, nbExp);
-            
-%             CGPTt = {};
-
-%             for s = 1:nbScl
-%                 ss = Sidx(s);
-                
-%                 data_noisy = P.add_white_noise_global(data{m,ss}, nlvl);
-%                 out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1, 10^5, 10^-8, 1, 'lsqr', op);
-%                 % out = P.reconstruct_CGPT(data_noisy.MSR_noisy, 1); % pinv
-                
-%                 CGPTt{s} = tools.cell2mat3D(out.CGPT);
-%             end
-
-%             % [SDt{m,p}, SD{m,p}] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt(m,p,:), SD_method, Scl);
-%             % SDt = SDt(Dico.extrema, :);
-%             % [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt{m,p}, SDt_Dico);
-
-%             [SDt, ~] = dico.CGPT.ShapeDescriptor_PT_time(CGPTt, SD_method, Scl);
-%             [errtmp(p,:,:), ~] = dico.CGPT.SD_Matching_time(SDt, SDt_Dico);
-%         end
-        
-%         Err0(k,m,:,:) = mean(errtmp,1);
-%         for s=1:nbScl
-%             [~, Idx0(k,m,:,s)] = sort(Err0(k,m,:,s));
-%         end
-%         toc
-%     end
-% end
-
-% Res.Err0 = Err0;
-% Res.Idx0 = Idx0;
-% Res.nbExp = nbExp;
-% Res.NLvls = NLvls;
-
-% % pathname = ['~/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-% pathname = ['~/Data/outputs/Pulse/',num2str(aperture),'pi/'];
-% % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Transformed/',num2str(aperture),'pi/'];
-% % pathname = ['/Volumes/ExFAT200G/Data/measurements/Pulse/Original/',num2str(aperture),'pi/'];
-% mkdir(pathname);
-% fname = [pathname,'data',num2str(length(B)),'_', num2str(nbScl),'scl_', num2str(NLvls(1)), 'nlvl.mat'];
-
-% save(fname,'Res','-v7.3');
-% fprintf('Data saved in %s\n', fname);
-
-% cc
