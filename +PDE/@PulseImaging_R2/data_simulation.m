@@ -19,7 +19,7 @@ function out = data_simulation(obj, Ntime)
 % ovrspl = max(1, floor(ovrspl));
 
 if nargin < 2
-    Ntime = obj.Ntime;
+	Ntime = obj.Ntime;
 end
 
 Phi = obj.compute_phi(Ntime); % Compute the function phi for all sources
@@ -27,19 +27,19 @@ out.MSR = {};
 % out.Phi = Phi;
 
 for t=1:Ntime
-    % Compute the MSR matrix by evaluating the single layer potential
-    MSR = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
-    
-    for i=1:obj.nbIncls
-        toto = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
-        for s=1:obj.cfg.Ns_total
-            rcv = obj.cfg.rcv(s); % receivers corresponding to the s-th source
-            
-            toto(s,:) = ops.SingleLayer.eval(obj.D{i}, Phi{t}(:,i,s), rcv);
-        end
-        MSR = MSR+toto;
-    end
-    out.MSR{t} = MSR;
+	% Compute the MSR matrix by evaluating the single layer potential
+	MSR = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
+	
+	for i=1:obj.nbIncls
+		toto = zeros(obj.cfg.Ns_total, obj.cfg.Nr);
+		for s=1:obj.cfg.Ns_total
+			rcv = obj.cfg.rcv(s); % receivers corresponding to the s-th source
+			
+			toto(s,:) = ops.SingleLayer.eval(obj.D{i}, Phi{t}(:,i,s), rcv);
+		end
+		MSR = MSR+toto;
+	end
+	out.MSR{t} = MSR;
 end
 out.Ntime = Ntime; % save the time list
 end

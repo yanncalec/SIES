@@ -1,11 +1,10 @@
 function CGPT = cell2mat(CGPTc)
-% CGPT = cell2mat(CGPTc)
-% Put the CGPT into a matrix form.  
+% Put the CGPT of a cell form into a matrix form.  
 % Input: 
-% CGPTc: CGPT in cell form, with the four elements
+% -CGPTc: CGPT in cell form, with the four elements
 % corresponding to {cc, cs, sc, ss} CGPTs.
 % Output:
-% CGPT: a matrix of dimension (2*ord) X (2*ord) with the
+% -CGPT: a matrix of dimension (2*ord) X (2*ord) with the
 % o-o(odd-odd), o-e, e-o, e-e(even-even) entries corresponding to
 % respectively CC, CS, SC, and SS matrices.
 

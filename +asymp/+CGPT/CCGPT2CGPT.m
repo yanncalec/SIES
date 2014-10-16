@@ -1,12 +1,8 @@
 function CGPT = CCGPT2CGPT(N1,N2)
 % Convert the Complex CGPT matrix N1 and N2 to CGPT
-% Input:
-% CCGPT: the Complex CGPT
-% Outputs:
-% CGPT: the standard CGPT in matrix form
 %
-% WARNING: 
-% the conversion to CGPT is valide only for real conductivity case, ie, lambda is a real number. 
+% WARNING:
+% the conversion to CGPT is valide only for real conductivity case, ie, lambda is a real number.
 
 
 CGPT={};

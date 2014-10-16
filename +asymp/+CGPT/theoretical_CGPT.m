@@ -9,14 +9,14 @@ function M = theoretical_CGPT(D, lambda, ord)
 % 4.10 of the book Ammari, Kang, 2007.
 %
 % Inputs:
-% D: a list of C2boundary objects
-% lambda: constants of contrast
-% ord: maximum order of CGPT to be computed
+% -D: a list of C2boundary objects
+% -lambda: constants of contrast
+% -ord: maximum order of CGPT to be computed
 %
 % Output:
-% M: a matrix of dimension (2*ord) X (2*ord) with the o-o(odd-odd), o-e, e-o,
+% -M: a matrix of dimension (2*ord) X (2*ord) with the o-o(odd-odd), o-e, e-o,
 % e-e(even-even) entries corresponding to respectively CC, CS, SC, and SS matrices.
-% 
+%
 % Convention:
 % M^cc(m,n) = \int_{\p D} Re(z^n) (\lambda I-K_D^*)^-1 [d (Re z^m) dn] ds(x)
 %
@@ -28,49 +28,49 @@ M = asymp.CGPT.theoretical_CGPT_fast(D, KsdS, lambda, ord);
 % if ~iscell(D)
 %     D = {D};
 % end
-% 
+%
 % epsilon = 1e-8; % precision threshold for handling the case lambda = 1/2
 % nbPoints = D{1}.nbPoints; % all C2boundary objects must have the same value of nbPoints
-% 
-% 
+%
+%
 % nbIncls = length(D);
-% Amat0 = asymp.CGPT.make_system_matrix(D, lambda); 
-% 
+% Amat0 = asymp.CGPT.make_system_matrix(D, lambda);
+%
 % if min(abs(lambda - 1/2)) < epsilon % if close to 1/2, add an extra condition of L^2_0 function
 %     Amat = [Amat0; kron(eye(nbIncls), ones(1, size(Amat0,2)/nbIncls))];
 % else
-%     Amat = Amat0;    
+%     Amat = Amat0;
 % end
-% 
+%
 % CC = zeros(ord);
 % CS = zeros(ord);
 % SC = zeros(ord);
 % SS = zeros(ord);
-% 
+%
 % for m=1:ord
 %     % Right hand vector
 %     B = zeros(nbPoints, nbIncls);
 %     for i=1:nbIncls
-%         dm = m*(D{i}.cpoints).^(m-1); % grad(z^m) 
-%         toto = D{i}.normal(1,:) .* dm + D{i}.normal(2,:) .* dm * 1i;        
+%         dm = m*(D{i}.cpoints).^(m-1); % grad(z^m)
+%         toto = D{i}.normal(1,:) .* dm + D{i}.normal(2,:) .* dm * 1i;
 %         B(:,i) = toto(:);
 %     end
-% 
+%
 %     if min(abs(lambda - 1/2)) < epsilon
 %         b = [B(:); zeros(nbIncls, 1)];
 %     else
 %         b = B(:);
 %     end
-%     
+%
 %     toto = Amat\real(b);
 %     realphim = reshape(toto, nbPoints, nbIncls);
 %     toto = Amat\imag(b);
 %     imagphim = reshape(toto, nbPoints, nbIncls);
-%     
+%
 %     for n=1:ord
 %         for i=1:nbIncls
 %             zn = (D{i}.cpoints.^n) .* D{i}.sigma;
-%             
+%
 %             CC(m,n) = CC(m,n) + real(zn)*realphim(:,i);
 %             CS(m,n) = CS(m,n) + imag(zn)*realphim(:,i);
 %             SC(m,n) = SC(m,n) + real(zn)*imagphim(:,i);
@@ -78,11 +78,11 @@ M = asymp.CGPT.theoretical_CGPT_fast(D, KsdS, lambda, ord);
 %         end
 %     end
 % end
-% 
+%
 % M = asymp.CGPT.cell2mat({CC,CS,SC,SS});
-% 
+%
 % % Symmetrization to improve numerical precision. Note that the complex CGPT matrix is only
 % % symmetric, not hermitian.
 % % M = (M+M.')/2;
 % end
-% 
+%

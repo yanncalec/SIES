@@ -9,11 +9,11 @@ KsdS = asymp.CGPT.make_block_matrix(D);
 %     D={D};
 % end
 % nbIncls = length(D);
-% 
+%
 % if length(lambda) < nbIncls
 %     error('Value of lambda must be specified for each inclusion.');
 % end
-% 
+%
 % % Check compatibility of inclusions
 % for m=1:nbIncls
 %     for n=(m+1):nbIncls
@@ -22,9 +22,9 @@ KsdS = asymp.CGPT.make_block_matrix(D);
 %         end
 %     end
 % end
-%         
+%
 % A = cell(nbIncls);
-% 
+%
 % for m=1:nbIncls
 %     for n=1:nbIncls
 %         % We use P0-P0 elements, so the stiff matrix is just the kernel matrix
@@ -37,7 +37,7 @@ KsdS = asymp.CGPT.make_block_matrix(D);
 %             A{m,n} = -1*ops.dSLdn.make_kernel_matrix(D{n}.points, D{n}.sigma, D{m}.points, ...
 %                                                         D{m}.normal);
 %         end
-%     end        
+%     end
 % end
-% 
+%
 % Amat = cell2mat(A);

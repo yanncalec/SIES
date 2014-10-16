@@ -1,23 +1,19 @@
-function [CGPTt0, dt0, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df) %, Tmax, Ntime)
+function [CGPTt0, dt0, CGPTf] = theoretical_CGPT_time(D, cnd, pmtt, ord, H, df)
 % Compute the time-dependent CGPT matrix N = h*M (*:convolution) with h a
-% waveform. The computation is done in the frequency domain. 
+% waveform. The computation is done in the frequency domain.
 %
 % Inputs:
-% D, cnd, pmtt: inclusions and their conductivity and permittivity
-% constants.
-% ord: order of CGPT matrix
-% H: Fourier transform of the waveform h on [0, Fmax] with Fmax being the bandwidth of H. Note that the pulse h is a
+% -D, cnd, pmtt: inclusions and their conductivity and permittivity constants.
+% -ord: order of CGPT matrix
+% -H: Fourier transform of the waveform h on [0, Fmax] with Fmax being the bandwidth of H. Note that the pulse h is a
 % real function, hence H(-w) = conj(H(w)). We recall the convention for the Fourier transform:
 %       H(w) = \int h(t) exp(-2*pi*1i*t*w) dt
-% df: frequency sampling step for H
-% % Tmax: compute CGPT on the maximal time
-% % Ntime: number of resampling points equally distributed on [0, Tmax]. No resampling (only possible truncation) if
-% % Ntime=0 (default).
+% -df: frequency sampling step for H
 %
 % Outputs:
-% CGPTt: time-dependent CGPT matrices on [0, Tmax]
-% dt: time-step of CGPTt
-% CGPTf: CGPT matrix in the frequency domain of the band [-Fmax, Fmax] 
+% -CGPTt0: time-dependent CGPT matrices on [0, Tmax]
+% -dt0: time-step of CGPTt
+% -CGPTf0: CGPT matrix in the frequency domain of the band [-Fmax, Fmax]
 
 % if nargin < 8
 %     Ntime = 0;
@@ -29,7 +25,7 @@ M0 = asymp.CGPT.theoretical_CGPT(D, asymp.CGPT.lambda(cnd, pmtt, df*(NH-1)), ord
 toto = max(max(abs(H(end) * M0)));
 
 if toto > 1e-5
-    warning(['Enlarge the bandwidth of the waveform! The current residual is ', num2str(toto)]);
+	warning(['Enlarge the bandwidth of the waveform! The current residual is ', num2str(toto)]);
 end
 
 % H is the half (on [0, Fmax]) of FFT of h which has an even length, so the last term of H must be
@@ -55,19 +51,19 @@ CGPTf = zeros(nr, nc, 2*Nfreq);
 % So we compute only for the frequency in [0, Fmax]:
 KsdS = asymp.CGPT.make_block_matrix(D);
 if max(abs(pmtt)) == 0 % In this case the CGPT matrix is independent of the frequency
-    M = asymp.CGPT.theoretical_CGPT_fast(D, KsdS, asymp.CGPT.lambda(cnd, pmtt, 0), ord);
-    
-    for f=1:NH % stop at NH since H=0 beyond NH (H zero-padded)
-        CGPTf(:,:, f) = H(f) * M;
-    end
+	M = asymp.CGPT.theoretical_CGPT_fast(D, KsdS, asymp.CGPT.lambda(cnd, pmtt, 0), ord);
+	
+	for f=1:NH % stop at NH since H=0 beyond NH (H zero-padded)
+		CGPTf(:,:, f) = H(f) * M;
+	end
 else
-    for f=1:NH % stop at NH since H=0 beyond NH (H zero-padded)
-        CGPTf(:,:, f) = H(f) * asymp.CGPT.theoretical_CGPT_fast(D, KsdS, asymp.CGPT.lambda(cnd, pmtt, (f-1)*df), ord);
-    end
+	for f=1:NH % stop at NH since H=0 beyond NH (H zero-padded)
+		CGPTf(:,:, f) = H(f) * asymp.CGPT.theoretical_CGPT_fast(D, KsdS, asymp.CGPT.lambda(cnd, pmtt, (f-1)*df), ord);
+	end
 end
 %
 for f=Nfreq+1 : 2*Nfreq % Copy to get the other part
-    CGPTf(:,:,f) = conj(CGPTf(:,:,2*Nfreq-f+2));
+	CGPTf(:,:,f) = conj(CGPTf(:,:,2*Nfreq-f+2));
 end
 
 % Take inverse Fourier transform to get h*M (*: convolution).

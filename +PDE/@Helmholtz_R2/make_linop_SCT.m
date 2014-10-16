@@ -2,7 +2,7 @@ function out = make_linop_SCT(cfg, k0, ord)
 % Make the linear operator of the acquisition system for the reconstruction of Scattering
 % coefficients (SCT).
 % INPUTS:
-% cfg:
+% cfg: instance of the configuration 
 % k0: wave number
 % ord: order of SCT
     

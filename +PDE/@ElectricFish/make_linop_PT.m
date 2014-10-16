@@ -3,20 +3,20 @@ function out = make_linop_PT(cfg, Current_bg, impd, symmode)
 % asymptotic eq 4.8.
 
 % The matrix related to sources:
-    [As, Ar] = make_matrix_gradUG(cfg, cfg.center, Current_bg, impd);
+[As, Ar] = make_matrix_gradUG(cfg, cfg.center, Current_bg, impd);
 
-    out.Lsymm = @(x,tflag)tools.linsys.SXR_op_list_sym(x,As,Ar,tflag); % linear operator with
-                                                                   % symmetric constraint
-    out.Lnsym = @(x,tflag)tools.linsys.SXR_op_list(x,As,Ar,tflag); % linear operator
+out.Lsymm = @(x,tflag)tools.linsys.SXR_op_list_sym(x,As,Ar,tflag); % linear operator with
+% symmetric constraint
+out.Lnsym = @(x,tflag)tools.linsys.SXR_op_list(x,As,Ar,tflag); % linear operator
 
-    if symmode
-        out.L = out.Lsymm;
-    else
-        out.L = out.Lnsym;
-    end
+if symmode
+	out.L = out.Lsymm;
+else
+	out.L = out.Lnsym;
+end
 
-    out.As = As;
-    out.Ar = Ar;
+out.As = As;
+out.Ar = Ar;
 end
 
 function [dU, dG] = make_matrix_gradUG(cfg, Z, current_bg, impd)
@@ -34,58 +34,58 @@ function [dU, dG] = make_matrix_gradUG(cfg, Z, current_bg, impd)
 % dG: a list of cfg.Nr X 2 matrix, The r-th row correspond to
 % grad(dGdn)(x_r, z), with x_r the r-th receiver
 
-    gradSL = zeros(cfg.Ns_total, 2);
-    gradDL = zeros(cfg.Ns_total, 2);
+gradSL = zeros(cfg.Ns_total, 2);
+gradDL = zeros(cfg.Ns_total, 2);
 
-    [~, H] = tools.Laplacian.Green2D_Hessian(cfg.all_src, Z);
-    toto = cfg.all_dipole;
-    gradSrc = [diag(toto(1,:)), diag(toto(2,:))] * H; 
-    % gradSrc = tools.bdiag(cfg.dipole, 2) * cfg.all_dipole
+[~, H] = tools.Laplacian.Green2D_Hessian(cfg.all_src, Z);
+toto = cfg.all_dipole;
+gradSrc = [diag(toto(1,:)), diag(toto(2,:))] * H;
+% gradSrc = tools.bdiag(cfg.dipole, 2) * cfg.all_dipole
 
-    for s=1:cfg.Ns_total
-        Omega0 = cfg.Bodies(s); % Fish's body at s-th position
-        Fish = Omega0.subset(cfg.idxRcv);
-        
-        % gradient of the simple layer potential
-        gradSL(s, :) = ops.SingleLayer.eval_grad(Fish, current_bg(s,:), Z);
-        
-        % gradient of the double layer potential
-        gradDL(s, :) = ops.DoubleLayer.eval_grad(Fish, current_bg(s,:), Z);
-        
-        [~, H] = tools.Laplacian.Green2D_Hessian(cfg.rcv(s), Z);
-        DN = [diag(Fish.normal(1,:)), diag(Fish.normal(2,:))];
+for s=1:cfg.Ns_total
+	Omega0 = cfg.Bodies(s); % Fish's body at s-th position
+	Fish = Omega0.subset(cfg.idxRcv);
+	
+	% gradient of the simple layer potential
+	gradSL(s, :) = ops.SingleLayer.eval_grad(Fish, current_bg(s,:), Z);
+	
+	% gradient of the double layer potential
+	gradDL(s, :) = ops.DoubleLayer.eval_grad(Fish, current_bg(s,:), Z);
+	
+	[~, H] = tools.Laplacian.Green2D_Hessian(cfg.rcv(s), Z);
+	DN = [diag(Fish.normal(1,:)), diag(Fish.normal(2,:))];
+	
+	dG{s} = - DN * H;
+end
 
-        dG{s} = - DN * H;
-    end
-
-    dU = gradSrc + gradSL - impd*gradDL;
+dU = gradSrc + gradSL - impd*gradDL;
 end
 
 function [dU, dG] = make_matrix_gradUG_oracle(cfg, Z, fpsi_bg, impd)
 % This function use fpsi_bg, the true function psi for the construction of system operator. This
 % is not possible in practice.
 
-    gradSL = zeros(cfg.Ns_total, 2);
-    gradDL = zeros(cfg.Ns_total, 2);
+gradSL = zeros(cfg.Ns_total, 2);
+gradDL = zeros(cfg.Ns_total, 2);
 
-    [~, H] = tools.Laplacian.Green2D_Hessian(cfg.all_src, Z);
-    toto = cfg.all_dipole;
-    gradSrc = [diag(toto(1,:)), diag(toto(2,:))] * H; 
-    % gradSrc = tools.bdiag(cfg.dipole, 2) * cfg.all_dipole
+[~, H] = tools.Laplacian.Green2D_Hessian(cfg.all_src, Z);
+toto = cfg.all_dipole;
+gradSrc = [diag(toto(1,:)), diag(toto(2,:))] * H;
+% gradSrc = tools.bdiag(cfg.dipole, 2) * cfg.all_dipole
 
-    for s=1:cfg.Ns_total
-        Fish = cfg.Bodies(s); % Fish's body at s-th position
-        
-        % gradient of the simple layer potential
-        gradSL(s, :) = ops.SingleLayer.eval_grad(Fish, fpsi_bg(:,s), Z);
-        
-        % gradient of the double layer potential
-        gradDL(s, :) = ops.DoubleLayer.eval_grad(Fish, fpsi_bg(:,s), Z);
-        
-        [~, H] = tools.Laplacian.Green2D_Hessian(cfg.rcv(s), Z);
-        DN = [diag(Fish.normal(1, cfg.idxRcv)), diag(Fish.normal(2, cfg.idxRcv))];
-        dG{s} = - DN * H;
-    end
+for s=1:cfg.Ns_total
+	Fish = cfg.Bodies(s); % Fish's body at s-th position
+	
+	% gradient of the simple layer potential
+	gradSL(s, :) = ops.SingleLayer.eval_grad(Fish, fpsi_bg(:,s), Z);
+	
+	% gradient of the double layer potential
+	gradDL(s, :) = ops.DoubleLayer.eval_grad(Fish, fpsi_bg(:,s), Z);
+	
+	[~, H] = tools.Laplacian.Green2D_Hessian(cfg.rcv(s), Z);
+	DN = [diag(Fish.normal(1, cfg.idxRcv)), diag(Fish.normal(2, cfg.idxRcv))];
+	dG{s} = - DN * H;
+end
 
-    dU = gradSrc + gradSL - impd*gradDL;
+dU = gradSrc + gradSL - impd*gradDL;
 end

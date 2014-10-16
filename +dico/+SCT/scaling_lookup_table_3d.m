@@ -3,12 +3,14 @@ function [err, scl] = scaling_lookup_table_3d(S0, frange, S, sfrange)
 % shape-descriptor S0.
 %
 % INPUTS:
-% S0: pre-computed frequency dependent shape-descriptor (inv. to translation and rotation), a 3D
+% -S0: pre-computed frequency dependent shape-descriptor (inv. to translation and rotation), a 3D
 % array. The third dimension of S0 is the frenquency.
-% frange: frequency range of S0 [f1, f2]
-% S: shape-descriptor extracted from multi-frequency data, a 3D array.
-% sfrange: scanning frequency range of S (used for data acquisition) [sf1, sf2]
+% -frange: frequency range of S0 [f1, f2]
+% -S: shape-descriptor extracted from multi-frequency data, a 3D array.
+% -sfrange: scanning frequency range of S (used for data acquisition) [sf1, sf2]
 % OUTPUTS:
+% err: euclidean distance between S and S0 for different scaling factor in the table
+% scl: values of scaling factors in the table
 
 
 % range of acceptable scaling factor [s1,s2]

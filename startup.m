@@ -1,3 +1,6 @@
+% Compile some Mex files needed (only) by the wavelet module. These can be
+% ignored.
+
 cd +tools;
 mex -largeArrayDims fulltosparse.c;
 mex -largeArrayDims tensorplus_mex.c;

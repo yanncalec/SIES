@@ -7,7 +7,7 @@ function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method, op
 % ord: maximum order of reconstruction
 % maxiter, tol: see lsqr method, not needed for pinv method
 % symmmode: if true a symmetric constraint on the solutionwill be incoorperated
-% method: 'pinv' for formal inversion by pseu-inverse or'lsqr' by iteration. 
+% method: 'pinv' for formal inversion by pseu-inverse or'lsqr' by iteration.
 % op: operator of the linear system, optional. op can be given by user for a fast computation.
 %
 % Output:
@@ -21,56 +21,56 @@ function out = reconstruct_CGPT(obj, MSR, ord, maxiter, tol, symmode, method, op
 % res: residual error of |L(CGPT) - MSR)|
 
 if ~iscell(MSR) % Convert to a cell, for compability with PulseImaging_R2 class
-    MSR = {MSR};
+	MSR = {MSR};
 end
 
 if nargin < 8
-    op = [];
+	op = [];
 end
 
 if nargin < 7
-    method = 'pinv';
+	method = 'pinv';
 end
 
 if nargin < 6
-    symmode = 0;
+	symmode = 0;
 end
 if nargin < 5
-    tol = 1e-5;
+	tol = 1e-5;
 end
 if nargin < 4
-    maxiter = 10^5;
+	maxiter = 10^5;
 end
 
 if isempty(op)
-    % Construct the linear operator L if it is not given by user
-    op = PDE.Conductivity_R2.make_linop_CGPT(obj.cfg, ord, symmode); 
+	% Construct the linear operator L if it is not given by user
+	op = PDE.Conductivity_R2.make_linop_CGPT(obj.cfg, ord, symmode);
 end
 
 out.op = op;
 
 if strcmp(method, 'lsqr')
-    for t=1:length(MSR)
-        toto = reshape(MSR{t}, [], 1);
-        % warning('off','all');
-        [X,flag,relres,iter] = lsqr(op.L, toto, tol, maxiter); % LSQR method
-        
-        CGPT = reshape(X, 2*ord, 2*ord);
-        out.res{t} = norm(toto - op.L(CGPT, 'notransp'));
-        out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
-        
-        if symmode
-            CGPT = CGPT+CGPT.';
-        end
-        out.CGPT{t} = CGPT;
-    end
+	for t=1:length(MSR)
+		toto = reshape(MSR{t}, [], 1);
+		% warning('off','all');
+		[X,flag,relres,iter] = lsqr(op.L, toto, tol, maxiter); % LSQR method
+		
+		CGPT = reshape(X, 2*ord, 2*ord);
+		out.res{t} = norm(toto - op.L(CGPT, 'notransp'));
+		out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
+		
+		if symmode
+			CGPT = CGPT+CGPT.';
+		end
+		out.CGPT{t} = CGPT;
+	end
 elseif strcmp(method, 'pinv')
-    for t=1:length(MSR)
-        CGPT = pinv(op.As)*MSR{t}*pinv(op.Ar');
-        out.res{t} = norm(MSR{t} - op.As*CGPT*op.Ar', 'fro');        
-        out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
-        out.CGPT{t} = CGPT;
-    end
-    
+	for t=1:length(MSR)
+		CGPT = pinv(op.As)*MSR{t}*pinv(op.Ar');
+		out.res{t} = norm(MSR{t} - op.As*CGPT*op.Ar', 'fro');
+		out.rres{t} = out.res{t}/norm(MSR{t}, 'fro');
+		out.CGPT{t} = CGPT;
+	end
+	
 end
 

@@ -1,16 +1,16 @@
 function [err, idx, idxall] = SD_Matching_time(I, D, Sidx) 
 % Dictionary matching algorithm by shape descriptor
 % Inputs:
-% I: a cell of matrix of shape descriptors to be identified. Each I{m} has dimension (Ntime X scl) and corresponds
+% -I: a cell of matrix of shape descriptors to be identified. Each I{m} has dimension (Ntime X scl) and corresponds
 % to an independent observation.
-% D: a cell of matrix of shape descriptors of dictionary. Each D{n} has
+% -D: a cell of matrix of shape descriptors of dictionary. Each D{n} has
 % dimension (Ntime X scl) and corresponds to the n-th shape of the dictionary
-% Sidx: active scales used for matching, optional
+% -Sidx: active scales used for matching, optional
 % Outputs:
-% err: err(m,:,s) contains the similarity of the m-th data and the dictionary. The third
+% -err: err(m,:,s) contains the similarity of the m-th data and the dictionary. The third
 % dimension is the comparaison using the first s scales in Sidx
-% idxall: sorted dictionary elements in decreasing order of similarity
-% idx : 2D matrix, idx(m,s) is the identified shape of the m-th data at the s-th scale
+% -idx : 2D matrix, idx(m,s) is the identified shape of the m-th data at the s-th scale
+% -idxall: sorted dictionary elements in decreasing order of similarity
 
 if ~iscell(I)
     I = {I}; 

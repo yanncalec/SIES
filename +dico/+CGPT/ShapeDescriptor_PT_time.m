@@ -1,15 +1,17 @@
 function [SDt, SD] = ShapeDescriptor_PT_time(CGPT, method, Scl)
+% Compute the time-dependent shape descriptor.
 % Inputs:
-% CGPT: a cell of 3D time-dependent CGPT matrix, CGPT{i} is the CGPT at
+% -CGPT: a cell of 3D time-dependent CGPT matrix, CGPT{i} is the CGPT at
 % the i-th scale.
-% method: method for computing the shape descriptor, see the code
-% Scl: normalisation of the shape descriptor (to have the same numerical
+% -method: method for computing the shape descriptor, see the code
+% -Scl: normalisation of the shape descriptor (to have the same numerical
 % values across scales), optional. One must be careful in the convention 
 % of normalization for the shape descriptor (eg, normalization by sqrt(Scl) 
 % corresponds to the case L2nrm=true in the function tools.make_pulse).
 %
 % Output:
-% SDt: shape descriptor of size (Ntime X length(Scl))
+% -SDt: shape descriptor of size (Ntime X length(Scl))
+% -SD: normalized singular values (based on which SDt is computed)
 
 nbScl = length(CGPT); % total number of scales
 

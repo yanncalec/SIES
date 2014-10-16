@@ -10,36 +10,36 @@ function out = reconstruct_WPT_l1_BP(MSR, Lop, W, M, delta, maxiter, tol)
 % maxiter: maximal number of iterations for l1 algorithm
 % tol: tolerance of the l1 algorithm
 
-    if nargin < 7
-        tol = 1e-5;
-    end
-    if nargin < 6
-        maxiter = 10^4;
-    end
-    if nargin < 5
-        delta = 0;
-    end
+if nargin < 7
+	tol = 1e-5;
+end
+if nargin < 6
+	maxiter = 10^4;
+end
+if nargin < 5
+	delta = 0;
+end
 
-    if delta > 0
-        error('Basis pursuit denoising not implemented!');
-    end
-    
-    if ~isempty(M)
-        Lopm.times = @(X)tools.linsys.linop_mask(X, Lop, M(:), 'notransp');
-        Lopm.trans = @(X)tools.linsys.linop_mask(X, Lop, M(:), 'transp');
-    else
-        Lopm.times = @(X)Lop(X,'notransp');
-        Lopm.trans = @(X)Lop(X,'transp');
-    end
-    
-    % YAll1
-    opts.tol = tol;
-    opts.maxiter = maxiter;
-    opts.delta = delta;
-    opts.nonortho = 1;
-    opts.weights = W(:);
-    opts.print = 2;
+if delta > 0
+	error('Basis pursuit denoising not implemented!');
+end
 
-    [out.X, out.msg] = tools.solver.yall1(Lopm, MSR(:), opts);
-    
+if ~isempty(M)
+	Lopm.times = @(X)tools.linsys.linop_mask(X, Lop, M(:), 'notransp');
+	Lopm.trans = @(X)tools.linsys.linop_mask(X, Lop, M(:), 'transp');
+else
+	Lopm.times = @(X)Lop(X,'notransp');
+	Lopm.trans = @(X)Lop(X,'transp');
+end
+
+% YAll1
+opts.tol = tol;
+opts.maxiter = maxiter;
+opts.delta = delta;
+opts.nonortho = 1;
+opts.weights = W(:);
+opts.print = 2;
+
+[out.X, out.msg] = tools.solver.yall1(Lopm, MSR(:), opts);
+
 end

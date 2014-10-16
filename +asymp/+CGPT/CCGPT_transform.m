@@ -1,12 +1,10 @@
 function [Z1, Z2] = CCGPT_transform(Y1, Y2, T0, S0, Phi0)
-% [Z1, Z2] = CCGPT_transform(Y1, Y2, T0, S0, Phi0)
-%
-% On the CCGPT Y1, Y2, apply first the rotation Phi0, the scaling S0,
-% then translation T0. The outputs Z1, Z2 are the transformed CCGPT.
+% On the CCGPT Y1, Y2, apply first the rotation Phi0, then the scaling S0,
+% and finally the translation T0. The outputs Z1, Z2 are the transformed CCGPT.
 %
 
 if nargin<5
-    Phi0 = 0;
+	Phi0 = 0;
 end
 
 ord = size(Y1, 1);
@@ -14,9 +12,9 @@ R = repmat((1:ord)', 1, ord);
 Comb = zeros(ord);
 
 for n=1:ord
-    for m=1:n
-        Comb(n,m) = nchoosek(n,m);
-    end
+	for m=1:n
+		Comb(n,m) = nchoosek(n,m);
+	end
 end
 
 t0 = (T0(1) + T0(2) * 1j);
