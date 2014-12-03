@@ -1,6 +1,5 @@
 %% Demo of the ElectricFish class
-% This script shows how to use |PDE.ElectricFish| class for data simulation
-% and reconstruction of GPTs.
+% This script shows how to use |PDE.ElectricFish| class for data simulation and reconstruction of GPTs.
 
 %% Add path
 clear all;

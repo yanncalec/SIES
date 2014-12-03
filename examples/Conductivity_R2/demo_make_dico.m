@@ -79,14 +79,14 @@ if mode == 0
     % for small dico
     for n=1:length(B)
         fig=figure; plot(B{n}, 'LineWidth', 2); axis image;
-        saveas(fig, ['~/Data/outputs/figures/small_dico/',B{n}.name_str,'.eps'], 'psc2');    
+        %saveas(fig, ['~/Data/outputs/figures/small_dico/',B{n}.name_str,'.eps'], 'psc2');    
     end
     save('~/Data/dico/CGPT/smalldico_CGPT.mat','Dico','-v7.3');
 else
     % for letters
     for n=1:length(B)
         fig=figure; plot(B{n}, 'LineWidth', 2); axis image;
-        saveas(fig, ['~/Data/outputs/figures/letter_dico/',B{n}.name_str,'.eps'], 'psc2');
+        %saveas(fig, ['~/Data/outputs/figures/letter_dico/',B{n}.name_str,'.eps'], 'psc2');
     end
     save('~/Data/dico/CGPT/letterdico_CGPT.mat','Dico','-v7.3');
 end

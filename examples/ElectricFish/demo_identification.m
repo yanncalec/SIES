@@ -2,12 +2,12 @@
 % This script shows the whole procedure of shape identification in a dictionary using |PDE.ElectricFish| class
 
 %% Add path
+clc;
 clear all;
 close all;
-clc;
 addpath('../../');
 
-%% Definition of the small inclusion
+%% Definition of the dictionary of shapes and the small inclusion
 
 delta = 1 ; % diameter of the standard shape
 %%
@@ -22,63 +22,59 @@ Dico{4} = shape.Rectangle(delta,0.5*delta,nbPoints);
 %%
 % Plot the dictionary
 figure;
-subplot(221); plot(Dico{1});
-subplot(222); plot(Dico{2});
-subplot(223); plot(Dico{3});
-subplot(224); plot(Dico{4});
+subplot(221); plot(Dico{1}); axis image;
+subplot(222); plot(Dico{2}); axis image;
+subplot(223); plot(Dico{3}); axis image;
+subplot(224); plot(Dico{4}); axis image;
 % axis image;
 
 %%
-% Make an inclusion
+% Make the inclusion
 
-D{1}=(Dico{1}<(0.3*pi))*0.5+[.1,-.1]';
+D{1}=(Dico{1}<(0.3*pi))*0.5+[.1,-.1]'; % Rotation, scaling, and translation of one standard shape
 cnd = [10]; 
 pmtt = [0.1];
 
-%% Set up an environment for experience
-% The sources/receptors are distributed on a circle whose center is closed
-% to the mass of center of the inclusion, up to a small offset.
-                           
 %% Definition of fish's body
 % We define the body of the fish, which is also an object of the
 % |C2boundary| class.
 %%
-% The fish swims on a measurement circle around a measurement center, which
-% is close to the center of mass of the inclusion, up to a small offset.
+% The fish moves on a measurement circle around the origin, which
+% is supposed to be close to the center of mass of the inclusion, up to a small offset.
 
-mcenter = [0,0]';
+mcenter = [0,0]'; % center of the measurement circle
 mradius = D{1}.diameter*1.5; % radius of the measurement circle
 
 %%
-% Initialize the fish's body, which may have different shapes.
+% Fish's body, which can be either a banana or an ellipse. Remark that the
+% radius of measurement circle |mradius| has no effect for banana-shaped fish.
 
 Omega = shape.Banana(mradius*delta*2.5, mradius*delta/10, [mradius, 0]', 0, 0, nbPoints/2); % Banana-shaped fish
                                                                                      
 % Omega = shape.Ellipse(delta*2, delta/4, 2^9); % Elliptic fish 
-% Omega = Omega<(1/2*pi);
+% Omega = Omega<(1/2*pi); % 
 
 %%
-% Set the skin's impedence
-impd = 0.001;
+% Skin's impedence
+impd = 0.01;
 
 %% 
-% The fish's receptors are distributed on the skin, and one can choose 
+% Fish's receptors are distributed all over the skin, and one can choose 
 % activate receivers by giving their indexes.
-idxRcv = 1:1:Omega.nbPoints; % This generates a equally distributed receptors
+idxRcv = 1:2:Omega.nbPoints; % This generates a equally distributed receptors
 % idxRcv = (Omega.nbPoints/4):4:(3*Omega.nbPoints/4);
 
 %% Configuration of the acquisition and setting up an environment for experience
-% By configuration of the acquisition we mean the positions of the fish's
+% By configuration of the acquisition we mean the positions of fish's
 % electric organ and receptors, which depends on the trajectory. This is
-% represented for example by an object of the |acq.Fish_circle| class, which
-% is a circular trajectory. Remark that the radius of measurement circle
-% has no effect for banana-shaped fish.
+% represented for example by an object of |acq.Fish_circle| class, which
+% is a circular trajectory. 
 cfg = acq.Fish_circle(Omega, idxRcv, mcenter, mradius, 10, 2*pi, [], [], 0.5, impd);
 % figure; plot(cfg);
 
 %%
-% To speed up the numerical simulationof the P1 boundary element method
-% (BEM), we down sampling the fish's body with a factor
+% To speed up the numerical simulation of the boundary element method
+% (BEM), fish's body is down-sampled.
 stepBEM = 4; % down-sampling factor for the P1 basis
 
 %%
@@ -96,30 +92,38 @@ figure; plot(P, [], 'LineWidth', 1); axis image;
 % freqlist = [0.01]; % one frequency            
 freqlist = linspace(100,200,20); % multi-frequency
 
-tic
+%%
+% Simulation of data. The result is a structure containing multiple fields,
+% in particular, data.MSR is the response matrix and data.Cur is the
+% current measured on the skin.
 data = P.data_simulation(freqlist);
-toc
 
 %% Construct the dictionary of shape descriptor and PT
 
-ord = 3; % order of the dictionary
+%%
+% order of the dictionary
+ord = 3; 
 
+%%
 % Multi-frequency dictionary of CGPT, PT and imaginary part of PT
-CGPT_Dico={}; 
-PT_Dico = {};
-PT_Dico_imag = {};
+CGPT_Dico={}; % dictionary of CGPT
+PT_Dico = {}; % dictionary of PT
+PT_Dico_imag = {}; % dictionary of imaginary part of PT
 
-SD1_Dico={}; SD2_Dico={}; % Multi-frequency dictionary of the shape-descriptor
+SD1_Dico={}; SD2_Dico={}; % dictionary of the shape-descriptor
 
 for f=1:length(freqlist)
     lambda = asymp.CGPT.lambda(cnd, pmtt, freqlist(f));
+    
     toto = {};
     toto1 = {}; toto2={};
 
     for n=1:length(Dico)
-        % CGPT ls computed separately for each shape
+        % CGPT is computed separately for each shape
         toto{n} = asymp.CGPT.theoretical_CGPT(Dico{n}, lambda, ord);
+        
         [U1{n}, U2{n}] = dico.CGPT.ShapeDescriptor_CGPT(toto{n});
+        
         toto1{n} = toto{n}(1:2,1:2);
         toto2{n} = imag(toto1{n});
     end
@@ -139,6 +143,7 @@ data = P.add_white_noise(data, nlvl);
 
 %%
 % Reconstruct the CGPT of a fixed frequency
+
 fidx = 5; % frequency index for reconstruction of CGPT
 symmode = 1; % force the solution to be symmetric
 

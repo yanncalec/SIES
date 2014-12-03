@@ -15,7 +15,7 @@ classdef Triangle < shape.C2boundary
 			% dspl: down-sampling factor for smoothing the corners
 			
 			if nargin<4
-				dspl = 20;
+				dspl = 10;
 			end
 			
 			h = a*cos(angl/2); % height of the triangle

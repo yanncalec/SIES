@@ -49,7 +49,7 @@ classdef C2boundary
 			% Check the curve
 			flag = shape.C2boundary.check_sampling(points);
 			if ~flag
-				warning('Singularities found in the curve! Decrease the sampling step!');
+				warning('Curve may contain singularities.');
 			end
 			
 			if nargin > 4 && ~isempty(com)

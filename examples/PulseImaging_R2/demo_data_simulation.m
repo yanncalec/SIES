@@ -1,13 +1,12 @@
-%% Data simulation for Pulse imaging.
+%% Data simulation for Pulse imaging
 % For shapes of the dictionary, we apply some perturbation and simulate
 % the MSR stream data. The parameter sets here need to be the same as in
-% make_dico.m.
+% demo_make_dico.m.
 
 %%
 clear all;
 close all;
 addpath('~/SIES');
-matlabpool;
 
 %% Load the dictionary and construct shape descriptors
 % pathname = '/Volumes/ExFAT200G/Data/';

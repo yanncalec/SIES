@@ -1,27 +1,30 @@
-%% Matching in a dictionary
+%% Monte-carlo test of dictionary matching algorithm
+% This script takes as in put the dictionary of time dependent CGPTs computed by
+% demo_make_dico.m, and the MSR stream simulated by demo_data_simulation.m,
+% reconstruct the CGPTs from data and apply the matching algorithm at
+% various level of noise.
+% 
+
 close all;
 clear all;
 addpath('~/SIES/');
-% matlabpool open;
 
-%% Load the dictionary
+%% Load the simulated MSR data
 aperture = 1/16;
 
 pathname = '/Volumes/Yue_Fat32/Data/';
 load([pathname, 'measurements/Pulse/Transformed/',num2str(aperture),'pi/data11_6scl.mat']);
-% load([pathname, 'measurements/Pulse/Original/',num2str(aperture),'pi/data11_6scl.mat']);
 
 %% Load the dictionary and construct shape descriptors
 load([pathname,'/dico/Pulse/smalldico11_6scl.mat']);
 Dico.names{7} = 'Rectangle 2'; Dico.names{11} = 'Ellipse 2';
 
+% Choose a subset of shapes that will be used for matching
+Bidx = [1:3, 5, 6, 8, 9, 11]; % without triangle, rectangle 2, E
 % Bidx = 1:length(Dico.B); % index of shapes to be identified
 % Bidx = [1, 2, 4:6, 8, 10:11]; % without flower, rectangle 2, L
-
 % Bidx = [1:3, 5, 6, 9:11]; % without triangle, rectangle 2, A
-  
 % Bidx = [1:3, 5, 6, 9:11]; % without triangle, rectangle 2, A
-Bidx = [1:3, 5, 6, 8, 9, 11]; % without triangle, rectangle 2, E
 
 nbShapes = length(Bidx);
 B = Dico.B(Bidx);
@@ -30,7 +33,7 @@ names = Dico.names(Bidx);
 cnd = Dico.cnd(Bidx);
 pmtt = Dico.pmtt(Bidx);
 
-% index of scales
+% Choose a subset of scales that will be used for matching
 % Sidx =  1:length(Dico.Scl); 
 Sidx =  2:5;
 Scl = Dico.Scl(Sidx);
@@ -93,7 +96,7 @@ op = PDE.Conductivity_R2.make_linop_CGPT(cfg, 1, 1); % Construct the linear oper
 % fig=figure; plot(P); axis image; xlim([-1,1]*8); ylim([-0.2,1]*8);
 % saveas(fig, '../figures/limview1pi.eps', 'psc2');
 
-%% Dico-matching
+%% Monte-carlo test of dictionary matching
 
 Hrecon = @(data, nlvl)P.addnoise_recon(data, nlvl, 1, 10^5, 10^-8, 1, 'lsqr', op);
 
@@ -106,8 +109,8 @@ for m=1:nbShapes
     data{m} = Data.data(Bidx(m), Sidx);
 end
 
-NLvls0 = [2];
-NLvls = NLvls0(1:end);
+NLvls0 = [2]; 
+NLvls = NLvls0(1:end); % level (percentage) of noise
 nbNlv = length(NLvls);
 
 nbExp = 1;

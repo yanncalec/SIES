@@ -1,7 +1,9 @@
 %% Demo of the Conductivity_R2 class
-% This script shows the procedure of dictionary matching using (CGPT) shape descriptors with frequency=0. 
-% Remark that if the size of the inclusion is too large then the reconstruction of high order CGPT might be inaccurate due to the large truncation error. On the contrary, if the size is too small then different objects might be ressemble.
-% The efficiency of the identification depends on the size of the target
+% This script shows the procedure of dictionary matching using (CGPT) shape descriptors.
+
+% Remark that if the size of the inclusion is too large then the reconstruction of high order CGPT might 
+% be inaccurate due to the large truncation error. On the contrary, if the size is too small then different 
+% objects might be ressemble. The efficiency of the identification depends on the size of the target
 % (or the distance to the transmitters). In a noisy environment (10% of
 % noise), one should reduce the field distance and use low order (2 or 3)
 % shape descriptors for identification.

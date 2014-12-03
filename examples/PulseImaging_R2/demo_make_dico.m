@@ -1,4 +1,4 @@
-%% Make a dictionary of shapes and time dependent CGPTs with the class |PulseImaging|
+%% Make a dictionary of time dependent CGPTs with the class |PulseImaging|
 
 % We need to at least fix one group of values (e.g., permittivity and conductivity) 
 % so that the best window of observation in the frequency domain (or equivalently 
@@ -141,26 +141,3 @@ Dico.CGPTt0 = CGPTt0; % The time dependent CGPT in the highest resolution
 fname = ['/Volumes/ExFAT200G/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
 save(fname,'Dico','-v7.3');
 fprintf('Data saved in %s\n', fname);
-
-%% manipulations
-% pathname = '/Volumes/Macbook/Data/';
-% load([pathname,'/dico/Pulse/smalldico9_21scl.mat']);
-% 
-% Dico0 = Dico;
-% sidx = 10:13;
-% nbScl = length(sidx);
-% 
-% Dico.Scl = Dico0.Scl(sidx);
-% Dico.Tmax = Dico0.Tmax(sidx);
-% Dico.dt0 = Dico0.dt0(sidx);
-% Dico.Fmax = Dico0.Fmax(sidx);
-% Dico.df = Dico0.df(sidx);
-% Dico.waveform = Dico0.waveform(sidx,:);
-% Dico.extrema = Dico0.extrema(sidx);
-% Dico.freqform = Dico0.freqform(sidx, :);
-% Dico.CGPTt0 = Dico0.CGPTt0(:,sidx);
-% 
-% fname = ['/Volumes/Macbook/Data/dico/Pulse/smalldico',num2str(length(Dico.B)),'_', num2str(nbScl),'scl.mat'];
-% save(fname,'Dico','-v7.3');
-% fprintf('Data saved in %s\n', fname);
-% 

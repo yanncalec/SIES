@@ -14,7 +14,7 @@ classdef Rectangle < shape.C2boundary
 			% dspl: down-sampling factor for smoothing the corners
 			
 			if nargin<4
-				dspl = 20;
+				dspl = 10;
 			end
 			
 			t1 = b/(a+b)/2; t2 = a/(a+b)/2; t3 = t1; t4 = t2;

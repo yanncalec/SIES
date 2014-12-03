@@ -1,4 +1,4 @@
-%% Make a dictionary of shape descriptors
+%% Demo of shape identification using |PulseImaging| class
 
 %%
 clear all;
@@ -34,7 +34,6 @@ B{4} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
 % B{6} = shape.Rectangle(delta/2, delta, nbPoints); % rectangle
 % B{7} = shape.Imgshape([imagepath,'/A.png'], nbPoints); % A
 % B{8} = shape.Imgshape([imagepath,'/E.png'], nbPoints); % E
-
 
 %% Compute multiscale time-dependent CGPT
 
@@ -110,7 +109,7 @@ fprintf('CGPTs of a transformed shape...\n');
 CGPTtD = {};
 tic
 for s = 1:scl
-    [CGPTtD{s}, ~] = asymp.CGPT.theoretical_CGPT_time_recon(D, cnd, pmtt, 2, Tmax0, Ntime, Scl(s));
+    [CGPTtD{s}, ~] = asymp.CGPT.theoretical_CGPT_time(D, cnd, pmtt, 2, Tmax0, Ntime, Scl(s));
 end
 toc
 

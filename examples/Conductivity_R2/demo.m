@@ -1,16 +1,16 @@
-%% Demo of the Conductivity_R2 class
+%% Demo of Conductivity_R2 class
 % This script shows how to use |PDE.Conductivity_R2| class for data simulation
-% and reconstruction of GPTs. The reconstruction of first order GPT (PT) is
-% very stable wrt both the noise level and the angle of view.
+% and reconstruction of GPTs. 
 
-% The reconstruction of the first order GPT (or the PT) is VERY ROBUST to
-% the noise and to the angle of view in the acquisition system . For
+% The reconstruction of the first order GPT (or the PT) is robust wrt
+% the noise level and to the angle of view in the acquisition system. For
 % example, with the following setting:
-% 50 transmitters, radius of measurement circle = 10 X radius of the object,
-% and accept only 10% of relative error of reconstruction, then
-% with pi/32 of aperture angle, one can even go beyond 100% of noise. In fact, the
-% performance depends on several parameters:
-% 1. Usage of the constraint of symmetry in the reconstruction, which can
+%    50 transmitters distributed on a radius of measurement circle = 10 X
+%    radius of the object, with pi/32 of aperture angle
+% the relative error of the reconstruction is less than 10%, at the noise level 100%. 
+%
+% It seems that this performance depends on several parameters:
+% 1. Use of the constraint of symmetry in the reconstruction, which can
 % greatly enhance the robustness
 % 2. Regularity  of the boundary. On those defined by analytic expressions 
 % (ellipse, flower, triangle etc, with the corners smoothed using function 
@@ -22,13 +22,13 @@
 % exists bugs in the related functions. 
 %
 % In the limited view setting, the reconstruction of high order (>=2) is
-% EXTREMELY UNSTABLE. 
+% extremely unstable.
 %
 
 %% Add path
 clear all;
 close all;
-% addpath('../../');
+addpath('../../');
 
 % Letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
